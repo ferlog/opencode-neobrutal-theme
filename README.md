@@ -8,10 +8,10 @@ Personalización visual y de configuración para **OpenCode** (app de escritorio
 
 | Carpeta/Archivo | Qué es |
 |----------------|--------|
-| `theme/custom-theme.css` | Hoja de estilos que sobrescribe las variables `--v2-*` de OpenCode e inyecta el estilo NeoBrutal (neumorfismo en botones/tarjetas + brutalismo en el botón principal). |
-| `theme/custom-renderer.js` | Script que añade texto a los botones de icono (Enviar/Detener) y evita contenido oculto/recortado. |
+| `theme/custom-theme.css` | Hoja de estilos que sobrescribe las variables `--v2-*` de OpenCode e inyecta el estilo NeoBrutal (neumorfismo en botones/tarjetas + brutalismo en el botón principal). Colores de los botones Enviar (verde) y Detener (rojo). |
+| `theme/custom-renderer.js` | Script que añade texto a los botones de icono (Enviar/Detener), evita contenido oculto/recortado y añade el botón **"Ver pantalla"** (OCR vía `iavirtualuser`). |
 | `agents/*.md` | 5 agentes personalizados: **review** (revisor), **planner** (planificador), **explorer** (explorador), **docs** (escritor de docs), **security** (auditor de seguridad). |
-| `scripts/install.ps1` | Script que extrae `app.asar`, inyecta el CSS y re-empaqueta la app. |
+| `scripts/install.ps1` | Script que extrae `app.asar`, inyecta CSS/JS, parchea `main/index.js` y `preload/index.js` (handler IPC `oc-ver-pantalla` + `window.api.verPantalla`) y re-empaqueta la app. |
 | `opencode.jsonc` | Config base con permisos seguros (edición permitida, bash con confirmación). |
 
 ## Requisitos
@@ -32,6 +32,13 @@ El UI de la app de escritorio es Electron: el CSS vive dentro de `app.asar`. El 
 ```
 
 > Nota: una actualización de OpenCode sobrescribe estos cambios. Ejecuta `install.ps1` de nuevo tras actualizar.
+
+## Botón "Ver pantalla" (OCR)
+
+El botón **👁 Ver pantalla** aparece junto al chat (abajo a la derecha). Al pulsarlo, el proceso principal de la app ejecuta `python ver_pantalla.py` del proyecto [`iavirtualuser`](../proyectos/iavirtualuser/ver_pantalla.py), que captura la pantalla y la reconoce con el OCR nativo de Windows, y coloca el texto visible en el cuadro de entrada del chat para que el asistente pueda "ver" la pantalla sin imágenes.
+
+- Requiere tener instalado el proyecto `C:\proyectos2026\proyectos\iavirtualuser` y sus dependencias (`pip install -r requirements.txt`).
+- Implementado con un handler IPC (`oc-ver-pantalla`) en `out/main/index.js` y `window.api.verPantalla` en `out/preload/index.js`, ambos inyectados por `install.ps1`.
 
 ## Instalación de agentes
 

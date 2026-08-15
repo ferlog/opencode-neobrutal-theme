@@ -74,6 +74,43 @@ if ($content -notmatch "custom-renderer.js") {
 }
 Set-Content $html $content -NoNewline
 
+# Parchear el proceso principal (main/index.js): handler IPC "oc-ver-pantalla"
+$mainJs = Join-Path $work "extract\out\main\index.js"
+$mainContent = Get-Content $mainJs -Raw
+if ($mainContent -notmatch "oc-ver-pantalla") {
+  $handlerBlock = @'
+  ipcMain.handle("oc-ver-pantalla", async (_event, detalle = false) => {
+    const script = "C:\proyectos2026\proyectos\iavirtualuser\ver_pantalla.py";
+    try {
+      const { stdout } = await execFilePromise("python", [script, detalle ? "--detalle" : ""], {
+        windowsHide: true,
+        timeout: 30000
+      });
+      const text = stdout.split("__FIN_OCR__")[0] || stdout;
+      return { ok: true, texto: text.trimEnd() };
+    } catch (err) {
+      return { ok: false, error: String((err && err.stderr) || err || "Error OCR") };
+    }
+  });
+'@
+  $mainContent = $mainContent -replace '(ipcMain\.handle\("resolve-app-path"[^\n]*\n)', "`$1$handlerBlock"
+  Set-Content $mainJs $mainContent -NoNewline
+  Write-Host "Handler oc-ver-pantalla inyectado en main/index.js" -ForegroundColor Cyan
+} else {
+  Write-Host "Handler oc-ver-pantalla ya presente en main/index.js" -ForegroundColor DarkGray
+}
+
+# Parchear el preload: exponer window.api.verPantalla
+$preloadJs = Join-Path $work "extract\out\preload\index.js"
+$preloadContent = Get-Content $preloadJs -Raw
+if ($preloadContent -notmatch "verPantalla") {
+  $preloadContent = $preloadContent -replace '(revealPath: \(path\) => electron\.ipcRenderer\.invoke\("reveal-path", path\),)', "`$1`n  verPantalla: (detalle) => electron.ipcRenderer.invoke(`"oc-ver-pantalla`", detalle),"
+  Set-Content $preloadJs $preloadContent -NoNewline
+  Write-Host "window.api.verPantalla inyectado en preload/index.js" -ForegroundColor Cyan
+} else {
+  Write-Host "window.api.verPantalla ya presente en preload/index.js" -ForegroundColor DarkGray
+}
+
 # Re-empaquetar
 Write-Host "Re-empaquetando app.asar..." -ForegroundColor Cyan
 & $node $asarCli.FullName pack (Join-Path $work "extract") $AppPath
