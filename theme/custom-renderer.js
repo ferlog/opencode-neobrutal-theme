@@ -392,7 +392,7 @@
     const wrap = document.createElement("div")
     wrap.setAttribute("data-oc-menus", "true")
     wrap.style.cssText =
-      "position:fixed;top:64px;right:16px;z-index:9998;width:230px;border-radius:14px;" +
+      "position:fixed;top:74px;right:16px;z-index:9998;width:230px;border-radius:14px;" +
       "border:2px solid #212121;background:#00695c;box-shadow:4px 4px 0 0 #212121;padding:8px;" +
       "font-family:inherit;max-height:calc(100vh - 90px);overflow-y:auto;"
 
@@ -461,11 +461,14 @@
       }
       agentsBox.textContent = "(cargando agentes...)"
       ocLog("collectAgents: abriendo selector nativo", "debug")
+      try { trigger.focus() } catch (e) { /* ignore */ }
       trigger.click()
+      trigger.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true }))
+      trigger.dispatchEvent(new MouseEvent("pointerup", { bubbles: true }))
       setTimeout(() => {
         try {
-          // El menú nativo recién abierto expone sus opciones en el DOM
-          const options = Array.from(document.querySelectorAll('[role="option"], [role="menuitemradio"], [data-slot*="option"]'))
+          // El menú nativo (Portal de Kobalte) monta sus opciones con retardo
+          const options = Array.from(document.querySelectorAll('[role="option"], [role="menuitemradio"], [data-slot*="option"], [data-kb-option]'))
           const names = []
           options.forEach((o) => {
             const t = (o.textContent || "").trim()
@@ -508,7 +511,7 @@
         } catch (e2) {
           agentsBox.textContent = "(error al leer agentes)"
         }
-      }, 350)
+      }, 800)
     } catch (e) {
       agentsBox.textContent = "(error)"
     }
