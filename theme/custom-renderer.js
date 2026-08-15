@@ -345,8 +345,19 @@
   let lastSpoken = ""
   let alarmasOn = true
   let ttsObs = null
+  let wasStreaming = false
   let lastSeen = ""
   let readTimer = null
+
+  function isStreaming() {
+    const sendBtn = document.querySelector('[data-action="prompt-submit"]')
+    if (sendBtn) {
+      const d = sendBtn.getAttribute("data-disabled")
+      if (sendBtn.disabled === true || (d && d.length > 0)) return true
+    }
+    if (document.querySelector('[data-oc-action="stop"], [data-icon="stop"]')) return true
+    return false
+  }
 
   function playAlarma() {
     try {
@@ -397,29 +408,38 @@
     if (!leerOn) { stopSpeaking() }
     // El observer se mantiene activo mientras haga falta leer o sonar la alarma.
     if ((!leerOn && !alarmasOn) || ttsObs) return
-    // Detección de "respuesta terminada" robusta (funciona también en
-    // respuestas rápidas, sin depender del botón Detener): cuando el texto de
-    // la última parte del asistente deja de cambiar durante un breve instante,
-    // consideramos que la respuesta se completó → alarma y/o lectura.
+    // Detecta el FIN de una generación (no depende del botón Detener):
+    // solo cuando OpenCode deja de estar "streaming" leemos la respuesta final.
+    // Así NO leemos todo el historial ni mensajes antiguos al hacer scroll.
     ttsObs = new MutationObserver(function () {
       if (!leerOn && !alarmasOn) return
+      if (isStreaming()) {
+        wasStreaming = true
+        return
+      }
+      if (!wasStreaming) return
+      // Ya no está generando → respuesta completada
       const text = getLastAssistantText()
-      if (!text) return
-      if (text === lastSeen) return
+      if (!text || text === lastSeen) { wasStreaming = false; return }
       lastSeen = text
       clearTimeout(readTimer)
       readTimer = setTimeout(() => {
+        wasStreaming = false
         const now = getLastAssistantText()
         if (now && now === lastSeen && now !== lastSpoken) {
+          lastSpoken = now
           if (alarmasOn) playAlarma()
-          if (leerOn) {
-            lastSpoken = now
-            speakText(now.slice(0, 800))
-          }
+          if (leerOn) speakText(now.slice(0, 800))
         }
-      }, 1200)
+      }, 900)
     })
-    ttsObs.observe(document.body, { childList: true, subtree: true, characterData: true })
+    ttsObs.observe(document.body, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: ["data-disabled", "disabled", "data-icon", "data-interrupted"]
+    })
   }
 
   function onToggleChange(key, value) {
