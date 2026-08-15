@@ -106,15 +106,19 @@
         btn.style.height = "34px"
         btn.style.boxShadow = "0 0 0 2px #1b5e20"
       }
-      // "Mostrar u ocultar revisión" → botón nativo más grande y legible
+      // "Mostrar u ocultar revisión" → botón nativo más grande, verde y legible
       if (aria && /mostrar u ocultar/i.test(aria)) {
         btn.style.width = "auto"
-        btn.style.minWidth = "120px"
-        btn.style.height = "34px"
-        btn.style.padding = "0 12px"
-        btn.style.border = "1px solid rgba(255,255,255,0.25)"
+        btn.style.minWidth = "190px"
+        btn.style.height = "36px"
+        btn.style.padding = "0 16px"
+        btn.style.background = "#2e7d32"
+        btn.style.color = "#fff"
+        btn.style.border = "2px solid #1b5e20"
         btn.style.borderRadius = "999px"
         btn.style.justifyContent = "center"
+        btn.style.boxShadow = "0 0 0 2px rgba(255,255,255,0.15)"
+        btn.style.gap = "8px"
       }
       // Deduplicar etiquetas (ej. "Detener Detener"): si el botón ya tiene
       // el texto nativo, quitar nuestro span y no volver a etiquetarlo.
