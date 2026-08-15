@@ -44,19 +44,35 @@
 
   function enhance() {
     const buttons = document.querySelectorAll(
-      'button[data-component="icon-button"], button[data-slot*="button"], button[role="button"]'
+      'button[data-component="icon-button"], button[data-slot*="button"], button[role="button"], button[data-component="icon-button-v2"]'
     )
     buttons.forEach((btn) => {
+      if (btn.dataset.ocLabel) return
       const txt = (btn.textContent || "").trim()
-      if (txt.length > 2) return
       const hasSvg = btn.querySelector("svg")
-      if (!hasSvg) return
-      if (isStop(btn)) {
-        addLabel(btn, "Detener")
-        btn.dataset.ocAction = "stop"
-      } else if (isSend(btn)) {
-        addLabel(btn, "Enviar")
-        btn.dataset.ocAction = "send"
+      if (txt.length <= 2 && hasSvg) {
+        if (isStop(btn)) {
+          addLabel(btn, "Detener")
+          btn.dataset.ocAction = "stop"
+        } else if (isSend(btn)) {
+          addLabel(btn, "Enviar")
+          btn.dataset.ocAction = "send"
+        }
+      }
+      // Etiquetar con el aria-label para que la OCR pueda leer los botones de icono
+      const aria = (btn.getAttribute("aria-label") || "").trim()
+      if (aria && !btn.dataset.ocLabel && btn.querySelector("svg") && (btn.textContent || "").trim().length <= 2) {
+        addLabel(btn, aria)
+      }
+      // "Nueva sesión" → botón verde con texto
+      if (aria && /nueva sesi/i.test(aria)) {
+        btn.dataset.ocAction = "new-session"
+        btn.style.background = "#2e7d32"
+        btn.style.color = "#fff"
+        btn.style.borderRadius = "999px"
+        btn.style.padding = "0 12px"
+        btn.style.height = "34px"
+        btn.style.boxShadow = "0 0 0 2px #1b5e20"
       }
     })
   }
