@@ -538,6 +538,18 @@
       document.querySelectorAll("body > div").forEach((el) => {
         lines.push(`TOP ${el.getAttribute("data-component") || el.getAttribute("data-slot") || el.className.slice(0, 60)}`)
       })
+      lines.push("")
+      lines.push("=== DATA ATTRS (inventario) ===")
+      const attrNames = {}
+      document.querySelectorAll("body *").forEach((el) => {
+        for (const a of el.attributes) {
+          if (a.name.startsWith("data-")) attrNames[a.name] = (attrNames[a.name] || 0) + 1
+        }
+      })
+      Object.entries(attrNames)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 45)
+        .forEach(([k, v]) => lines.push(`${k}: ${v}`))
       api.ocDump(lines.join("\n")).catch(() => {})
       ocLog("ocDump generado: " + lines.length + " líneas", "debug")
     } catch (e) { /* ignore */ }
