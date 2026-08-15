@@ -135,10 +135,11 @@ $ocHandlers = @(
         ojos: cfg.ojos !== false,
         manos: cfg.manos !== false,
         sonidos: cfg.sonidos !== false,
-        leer: cfg.leer === true
+        leer: cfg.leer === true,
+        alarmas: cfg.alarmas !== false
       };
     } catch (err) {
-      return { ok: true, ojos: true, manos: true, sonidos: true, leer: false };
+      return { ok: true, ojos: true, manos: true, sonidos: true, leer: false, alarmas: true };
     }
   });
 '@ },
@@ -185,6 +186,21 @@ $ocHandlers = @(
       return { ok: false, error: String((err && err.stderr) || err || "Error TTS") };
     }
   });
+'@ },
+  @{ key = "oc-alarma"; block = @'
+  ipcMain.handle("oc-alarma", async (_event, modo = "") => {
+    const script = "C:\\proyectos2026\\proyectos\\iavirtualuser\\alarma.py";
+    try {
+      const { stdout } = await execFilePromise("python", [script, modo], {
+        windowsHide: true,
+        timeout: 15000
+      });
+      const out = stdout.toString("utf-8") || "";
+      return { ok: !out.includes("ERROR"), texto: out.trimEnd() };
+    } catch (err) {
+      return { ok: false, error: String((err && err.stderr) || err || "Error alarma") };
+    }
+  });
 '@ }
 )
 
@@ -199,10 +215,10 @@ foreach ($h in $ocHandlers) {
 
 # Forzar actualización del bloque de retorno de oc-config-get (aunque ya exista)
 $oldGetReturn = 'return { ok: true, ojos: cfg.ojos !== false, manos: cfg.manos !== false };'
-$newGetReturn = 'return { ok: true, ojos: cfg.ojos !== false, manos: cfg.manos !== false, sonidos: cfg.sonidos !== false, leer: cfg.leer === true };'
+$newGetReturn = 'return { ok: true, ojos: cfg.ojos !== false, manos: cfg.manos !== false, sonidos: cfg.sonidos !== false, leer: cfg.leer === true, alarmas: cfg.alarmas !== false };'
 if ($mainContent -match [regex]::Escape($oldGetReturn)) {
   $mainContent = $mainContent -replace [regex]::Escape($oldGetReturn), $newGetReturn
-  Write-Host "oc-config-get: retorno actualizado (sonidos/leer)" -ForegroundColor Cyan
+  Write-Host "oc-config-get: retorno actualizado (sonidos/leer/alarmas)" -ForegroundColor Cyan
 }
 
 # Rutas portables: apuntar los scripts de iavirtualuser a la carpeta del repo
@@ -220,7 +236,8 @@ $ocPreload = @(
   @{ key = "configGet"; line = "  configGet: () => electron.ipcRenderer.invoke(`"oc-config-get`")," },
   @{ key = "configSet"; line = "  configSet: (data) => electron.ipcRenderer.invoke(`"oc-config-set`", data)," },
   @{ key = "ocLog"; line = "  ocLog: (msg, level) => electron.ipcRenderer.invoke(`"oc-log`", msg, level)," },
-  @{ key = "speak"; line = "  speak: (texto) => electron.ipcRenderer.invoke(`"oc-tts`", texto)," }
+  @{ key = "speak"; line = "  speak: (texto) => electron.ipcRenderer.invoke(`"oc-tts`", texto)," },
+  @{ key = "alarma"; line = "  alarma: (modo) => electron.ipcRenderer.invoke(`"oc-alarma`", modo)," }
 )
 foreach ($m in $ocPreload) {
   if ($preloadContent -notmatch $m.key) {

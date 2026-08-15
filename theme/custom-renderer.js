@@ -216,6 +216,7 @@
     const toggleOjos = makeToggle("👁 Utilizar ojos OCR", "ojos", true, onToggleChange)
     const toggleManos = makeToggle("🖐 Utilizar manos", "manos", true, onToggleChange)
     const toggleSonidos = makeToggle("🔊 Sonidos", "sonidos", true, onToggleChange)
+    const toggleAlarmas = makeToggle("🔔 Alarmas", "alarmas", true, onToggleChange)
     const toggleLeer = makeToggle("🗣 Leer respuesta", "leer", false, onToggleChange)
 
     const verBtn = document.createElement("button")
@@ -260,6 +261,7 @@
     wrap.appendChild(toggleOjos.row)
     wrap.appendChild(toggleManos.row)
     wrap.appendChild(toggleSonidos.row)
+    wrap.appendChild(toggleAlarmas.row)
     wrap.appendChild(toggleLeer.row)
     wrap.appendChild(verBtn)
     wrap.appendChild(probarBtn)
@@ -275,6 +277,7 @@
             toggleManos.apply(!!r.manos)
             if (typeof r.sonidos !== "undefined") toggleSonidos.apply(!!r.sonidos)
             if (typeof r.leer !== "undefined") toggleLeer.apply(!!r.leer)
+            if (typeof r.alarmas !== "undefined") toggleAlarmas.apply(!!r.alarmas)
             applyAudioState()
             applyTtsState()
           }
@@ -298,11 +301,21 @@
   }
 
   // ------------------------------------------------------------------
-  // Leer respuesta: TTS (speechSynthesis) al terminar una respuesta
+  // Leer respuesta (TTS) + Alarma (sonido corto) al terminar una respuesta
   // ------------------------------------------------------------------
   let leerOn = false
   let lastSpoken = ""
+  let alarmasOn = true
   let ttsObs = null
+
+  function playAlarma() {
+    try {
+      const api = window.api || {}
+      if (typeof api.alarma === "function") {
+        api.alarma("doble").catch(() => {})
+      }
+    } catch (e) { /* ignore */ }
+  }
 
   function stopSpeaking() {
     try {
@@ -341,22 +354,25 @@
   }
 
   function applyTtsState() {
-    if (!leerOn) { stopSpeaking(); return }
-    if (ttsObs) return
+    if (!leerOn) { stopSpeaking() }
+    // El observer se mantiene activo mientras haga falta leer o sonar la alarma.
+    if ((!leerOn && !alarmasOn) || ttsObs) return
     // Señal de "respuesta terminada": cuando desaparece el botón Detener
     // (data-oc-action=stop) y reaparece Enviar, el agente finalizó.
     let sawStop = false
     ttsObs = new MutationObserver(function () {
-      if (!leerOn) return
       const stopBtn = document.querySelector('[data-oc-action="stop"]')
       if (stopBtn) { sawStop = true; return }
       if (!sawStop) return
       // Detener desapareció → respuesta completada
       sawStop = false
-      const text = getLastAssistantText()
-      if (text && text !== lastSpoken) {
-        lastSpoken = text
-        speakText(text.slice(0, 800))
+      if (alarmasOn) playAlarma()
+      if (leerOn) {
+        const text = getLastAssistantText()
+        if (text && text !== lastSpoken) {
+          lastSpoken = text
+          speakText(text.slice(0, 800))
+        }
       }
     })
     ttsObs.observe(document.body, { childList: true, subtree: true })
@@ -365,6 +381,7 @@
   function onToggleChange(key, value) {
     if (key === "sonidos") { sonidosOn = value; applyAudioState() }
     if (key === "leer") { leerOn = value; applyTtsState() }
+    if (key === "alarmas") { alarmasOn = value; applyTtsState() }
     try {
       const api = window.api || {}
       if (typeof api.configSet === "function") {
