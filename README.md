@@ -9,11 +9,11 @@ Personalización visual y de configuración para **OpenCode** (app de escritorio
 | Carpeta/Archivo | Qué es |
 |----------------|--------|
 | `theme/custom-theme.css` | Hoja de estilos que sobrescribe las variables `--v2-*` de OpenCode e inyecta el estilo NeoBrutal (neumorfismo en botones/tarjetas + brutalismo en el botón principal). Colores de los botones Enviar (verde) y Detener (rojo). |
-| `theme/custom-renderer.js` | Script que añade texto a los botones de icono (Enviar/Detener), evita contenido oculto/recortado y añade el **panel de control `🤖 iavirtualuser`** con toggles (👁 ojos OCR, 🖐 manos, 🔊 sonidos, 🗣 leer respuesta), botón **📷 Ver pantalla** y botón **🔊 Probar lectura**. |
+| `theme/custom-renderer.js` | Script que añade texto a los botones de icono (Enviar/Detener, y agranda/colorea **Copiar respuesta** y **Mostrar/Ocultar revisión**), evita contenido oculto/recortado y añade el **panel de control `🤖 iavirtualuser`** con toggles (👁 ojos OCR, 🖐 manos, 🔊 sonidos, 🔔 alarmas, 🗣 leer respuesta), botón **📷 Ver pantalla** y botón **🔊 Probar lectura**. |
 | `theme/custom-theme.css` | Hoja de estilos NeoBrutal. |
 | `agents/*.md` | 5 agentes personalizados: **review** (revisor), **planner** (planificador), **explorer** (explorador), **docs** (escritor de docs), **security** (auditor de seguridad). |
 | `scripts/install.ps1` | Script que extrae `app.asar`, inyecta CSS/JS, parchea `main/index.js` y `preload/index.js` (handlers IPC: `oc-ver-pantalla`, `oc-dump`, `oc-config-get`, `oc-config-set`, `oc-log`, `oc-tts` + métodos `window.api.*`) y re-empaqueta la app. Guarda versiones con fecha/hora y permite deshacer. |
-| `iavirtualuser/` | Copia portable de los scripts de visión/voz que usa la app: `ver_pantalla.py` (OCR + detección de secciones/cuadros), `leer_texto.py` (TTS nativo de Windows) y el módulo `ojos/`. |
+| `iavirtualuser/` | Copia portable de los scripts de visión/voz que usa la app: `ver_pantalla.py` (OCR + detección de secciones/cuadros), `leer_texto.py` (TTS nativo de Windows), `alarma.py` (beep al terminar la respuesta), `mouse_circle.py` (mueve el ratón en círculo) y el módulo `ojos/`. |
 | `opencode.jsonc` | Config base con permisos seguros (edición permitida, bash con confirmación). |
 
 ## Requisitos
@@ -57,6 +57,19 @@ python ver_pantalla.py --secciones              # agrupa el texto en cuadros/di�
 El panel tiene el toggle **🗣 Leer respuesta** (lee en voz alta cuando termina una respuesta del asistente) y el botón **🔊 Probar lectura** (lee una frase de prueba al instante). Usa `leer_texto.py`, un TTS **nativo de Windows** (winsdk + winsound) que funciona de forma fiable en Electron, a diferencia de `window.speechSynthesis`.
 
 Implementado con el handler IPC (`oc-tts`) y `window.api.speak`.
+
+## Alarmas al terminar la respuesta
+
+El panel tiene el toggle **🔔 Alarmas**: cuando el asistente termina una respuesta, suena un **beep doble** (independiente de la lectura en voz alta). Implementado con el handler IPC (`oc-alarma`) que ejecuta `alarma.py` (winsound.Beep) y `window.api.alarma`. Tanto la alarma como la lectura automática se disparan al detectar que el texto de la última respuesta se estabiliza.
+
+## Ratón en círculo
+
+`mouse_circle.py` mueve el cursor describiendo un círculo alrededor de su posición actual, útil para verificar que el control del ratón funciona:
+
+```powershell
+python mouse_circle.py [radio] [duración_seg] [periodo_seg]
+python mouse_circle.py 70 6 5   # círculo pequeño, 6s, vuelta cada 5s
+```
 
 ## Versiones y deshacer
 
