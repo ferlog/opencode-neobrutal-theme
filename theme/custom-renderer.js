@@ -554,6 +554,23 @@
         lines.push(`TOP ${el.getAttribute("data-component") || el.getAttribute("data-slot") || el.className.slice(0, 60)}`)
       })
       lines.push("")
+      lines.push("=== TIMELINE PARTS ===")
+      document.querySelectorAll("[data-timeline-part-id]").forEach((p) => {
+        const txt = (p.textContent || "").trim()
+        const msgId = p.closest("[data-message-id]")
+        const roleAttr = msgId ? Array.from(msgId.attributes).filter((a) => /role|author/i.test(a.name)).map((a) => a.name + "=" + a.value).join(" ") : ""
+        lines.push(`PART id=${p.getAttribute("data-timeline-part-id")} len=${txt.length} msg=${msgId ? msgId.getAttribute("data-message-id") : "-"} ${roleAttr} :: ${txt.slice(0, 70)}`)
+      })
+      lines.push("")
+      lines.push("=== MESSAGE ROLES ===")
+      document.querySelectorAll("[data-message-id]").forEach((m) => {
+        const attrs = []
+        for (const a of m.attributes) {
+          if (/role|author|data-message/.test(a.name)) attrs.push(a.name + "=" + a.value.slice(0, 40))
+        }
+        lines.push(`MSG ${m.getAttribute("data-message-id")} ${attrs.join(" ")} :: ${(m.textContent || "").trim().slice(0, 50)}`)
+      })
+      lines.push("")
       lines.push("=== DATA ATTRS (inventario) ===")
       const attrNames = {}
       document.querySelectorAll("body *").forEach((el) => {
