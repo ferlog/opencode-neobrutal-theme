@@ -74,15 +74,17 @@ if ($content -notmatch "custom-renderer.js") {
 }
 Set-Content $html $content -NoNewline
 
-# Parchear el proceso principal (main/index.js): handler IPC "oc-ver-pantalla"
+# Parchear el proceso principal (main/index.js): handlers IPC personalizados
 $mainJs = Join-Path $work "extract\out\main\index.js"
 $mainContent = Get-Content $mainJs -Raw
 # Corregir un bug previo: Buffer.split no existe; convertir a string antes
 $mainContent = $mainContent -replace 'const text = stdout\.split\("__FIN_OCR__"\)\[0\] \|\| stdout;', 'const text = stdout.toString("utf-8").split("__FIN_OCR__")[0] || stdout.toString("utf-8");'
-if ($mainContent -notmatch "oc-ver-pantalla") {
-  $handlerBlock = @'
+
+# Definir los handlers a inyectar, cada uno con su token de presencia
+$ocHandlers = @(
+  @{ key = "oc-ver-pantalla"; block = @'
   ipcMain.handle("oc-ver-pantalla", async (_event, detalle = false) => {
-    const script = "C:\proyectos2026\proyectos\iavirtualuser\ver_pantalla.py";
+    const script = "C:\\proyectos2026\\proyectos\\iavirtualuser\\ver_pantalla.py";
     try {
       const { stdout } = await execFilePromise("python", [script, detalle ? "--detalle" : ""], {
         windowsHide: true,
@@ -94,24 +96,77 @@ if ($mainContent -notmatch "oc-ver-pantalla") {
       return { ok: false, error: String((err && err.stderr) || err || "Error OCR") };
     }
   });
-'@
-  $mainContent = $mainContent -replace '(ipcMain\.handle\("resolve-app-path"[^\n]*\n)', "`$1$handlerBlock"
-  Write-Host "Handler oc-ver-pantalla inyectado en main/index.js" -ForegroundColor Cyan
-} else {
-  Write-Host "Handler oc-ver-pantalla ya presente en main/index.js" -ForegroundColor DarkGray
+'@ },
+  @{ key = "oc-dump"; block = @'
+  ipcMain.handle("oc-dump", async (_event, content) => {
+    try {
+      const path = "C:\\Users\\Fernando\\AppData\\Local\\Temp\\opencode\\domdump.txt";
+      const fh = await open(path, "w");
+      await fh.writeFile(content);
+      await fh.close();
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, error: String(err) };
+    }
+  });
+'@ },
+  @{ key = "oc-config-get"; block = @'
+  ipcMain.handle("oc-config-get", async () => {
+    const path = "C:\\proyectos2026\\proyectos\\iavirtualuser\\config.json";
+    try {
+      const raw = await readFile(path, "utf-8");
+      const cfg = JSON.parse(raw);
+      return { ok: true, ojos: cfg.ojos !== false, manos: cfg.manos !== false };
+    } catch (err) {
+      return { ok: true, ojos: true, manos: true };
+    }
+  });
+'@ },
+  @{ key = "oc-config-set"; block = @'
+  ipcMain.handle("oc-config-set", async (_event, data) => {
+    const path = "C:\\proyectos2026\\proyectos\\iavirtualuser\\config.json";
+    try {
+      const prev = await readFile(path, "utf-8").then((r) => JSON.parse(r)).catch(() => ({}));
+      const next = { ...prev, ...data };
+      const fh = await open(path, "w");
+      await fh.writeFile(JSON.stringify(next, null, 2));
+      await fh.close();
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, error: String(err) };
+    }
+  });
+'@ }
+)
+
+foreach ($h in $ocHandlers) {
+  if ($mainContent -notmatch $h.key) {
+    $mainContent = $mainContent -replace '(ipcMain\.handle\("resolve-app-path"[^\n]*\n)', "`$1$($h.block)"
+    Write-Host "Handler $($h.key) inyectado en main/index.js" -ForegroundColor Cyan
+  } else {
+    Write-Host "Handler $($h.key) ya presente en main/index.js" -ForegroundColor DarkGray
+  }
 }
 Set-Content $mainJs $mainContent -NoNewline
 
 # Parchear el preload: exponer window.api.verPantalla
 $preloadJs = Join-Path $work "extract\out\preload\index.js"
 $preloadContent = Get-Content $preloadJs -Raw
-if ($preloadContent -notmatch "verPantalla") {
-  $preloadContent = $preloadContent -replace '(revealPath: \(path\) => electron\.ipcRenderer\.invoke\("reveal-path", path\),)', "`$1`n  verPantalla: (detalle) => electron.ipcRenderer.invoke(`"oc-ver-pantalla`", detalle),"
-  Set-Content $preloadJs $preloadContent -NoNewline
-  Write-Host "window.api.verPantalla inyectado en preload/index.js" -ForegroundColor Cyan
-} else {
-  Write-Host "window.api.verPantalla ya presente en preload/index.js" -ForegroundColor DarkGray
+$ocPreload = @(
+  @{ key = "verPantalla"; line = "  verPantalla: (detalle) => electron.ipcRenderer.invoke(`"oc-ver-pantalla`", detalle)," },
+  @{ key = "ocDump"; line = "  ocDump: (content) => electron.ipcRenderer.invoke(`"oc-dump`", content)," },
+  @{ key = "configGet"; line = "  configGet: () => electron.ipcRenderer.invoke(`"oc-config-get`")," },
+  @{ key = "configSet"; line = "  configSet: (data) => electron.ipcRenderer.invoke(`"oc-config-set`", data)," }
+)
+foreach ($m in $ocPreload) {
+  if ($preloadContent -notmatch $m.key) {
+    $preloadContent = $preloadContent -replace '(revealPath: \(path\) => electron\.ipcRenderer\.invoke\("reveal-path", path\),)', "`$1`n$($m.line)"
+    Write-Host "window.api.$($m.key) inyectado en preload/index.js" -ForegroundColor Cyan
+  } else {
+    Write-Host "window.api.$($m.key) ya presente en preload/index.js" -ForegroundColor DarkGray
+  }
 }
+Set-Content $preloadJs $preloadContent -NoNewline
 
 # Re-empaquetar
 Write-Host "Re-empaquetando app.asar..." -ForegroundColor Cyan
