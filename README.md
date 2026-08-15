@@ -9,6 +9,7 @@ Personalización visual y de configuración para **OpenCode** (app de escritorio
 | Carpeta/Archivo | Qué es |
 |----------------|--------|
 | `theme/custom-theme.css` | Hoja de estilos que sobrescribe las variables `--v2-*` de OpenCode e inyecta el estilo NeoBrutal (neumorfismo en botones/tarjetas + brutalismo en el botón principal). |
+| `theme/custom-renderer.js` | Script que añade texto a los botones de icono (Enviar/Detener) y evita contenido oculto/recortado. |
 | `agents/*.md` | 5 agentes personalizados: **review** (revisor), **planner** (planificador), **explorer** (explorador), **docs** (escritor de docs), **security** (auditor de seguridad). |
 | `scripts/install.ps1` | Script que extrae `app.asar`, inyecta el CSS y re-empaqueta la app. |
 | `opencode.jsonc` | Config base con permisos seguros (edición permitida, bash con confirmación). |

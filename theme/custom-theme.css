@@ -159,3 +159,25 @@ h1, h2, h3, h4,
   border-radius: 6px;
   border: 2px solid var(--m-color-surface);
 }
+
+/* ---------- Texto en botón DETENER (fallback si JS no corre) ---------- */
+[data-component="icon-button"][data-icon="stop"] {
+  gap: 6px;
+}
+[data-component="icon-button"][data-icon="stop"]::after {
+  content: "Detener";
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* ---------- No ocultar contenido / evitar recortes ---------- */
+[data-slot="prompt-attachments"] {
+  overflow: visible !important;
+}
+[data-component="prompt-input-v2-attachments"],
+[data-slot="prompt-attachments-scroll"] {
+  overflow-x: visible !important;
+  overflow-y: visible !important;
+}
+

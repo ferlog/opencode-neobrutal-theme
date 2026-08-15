@@ -6,6 +6,7 @@
 param(
   [string]$AppPath = "$env:LOCALAPPDATA\Programs\@opencode-aidesktop\resources\app.asar",
   [string]$ThemeCss = "$PSScriptRoot\..\theme\custom-theme.css",
+  [string]$RendererJs = "$PSScriptRoot\..\theme\custom-renderer.js",
   [switch]$Restore
 )
 
@@ -54,14 +55,24 @@ Write-Host "Extrayendo app.asar..." -ForegroundColor Cyan
 $renderer = Join-Path $work "extract\out\renderer"
 Copy-Item $ThemeCss (Join-Path $renderer "custom-theme.css") -Force
 
+# Copiar el JS de mejoras de UI
+if (Test-Path $RendererJs) {
+  Copy-Item $RendererJs (Join-Path $renderer "custom-renderer.js") -Force
+  Write-Host "custom-renderer.js copiado" -ForegroundColor Cyan
+}
+
 # Inyectar la referencia en index.html (si no está ya)
 $html = Join-Path $renderer "index.html"
 $content = Get-Content $html -Raw
 if ($content -notmatch "custom-theme.css") {
   $content = $content -replace '(rel="stylesheet"[^>]*main-[^"]+\.css">)', "`$1`n    <link rel=`"stylesheet`" crossorigin href=`"./custom-theme.css`">"
-  Set-Content $html $content -NoNewline
   Write-Host "Referencia a custom-theme.css inyectada en index.html" -ForegroundColor Cyan
 }
+if ($content -notmatch "custom-renderer.js") {
+  $content = $content -replace '(<script type="module"[^>]*main-[^"]+\.js">)', "`$1`n    <script defer src=`"./custom-renderer.js`"></script>"
+  Write-Host "Referencia a custom-renderer.js inyectada en index.html" -ForegroundColor Cyan
+}
+Set-Content $html $content -NoNewline
 
 # Re-empaquetar
 Write-Host "Re-empaquetando app.asar..." -ForegroundColor Cyan
