@@ -234,12 +234,35 @@
     })
     verBtn.addEventListener("click", onVerPantalla)
 
+    const probarBtn = document.createElement("button")
+    probarBtn.type = "button"
+    probarBtn.setAttribute("data-oc-probar-tts", "true")
+    probarBtn.textContent = "🔊 Probar lectura"
+    probarBtn.style.cssText =
+      "width:100%;margin-top:8px;display:inline-flex;align-items:center;justify-content:center;gap:6px;" +
+      "padding:8px 10px;border-radius:10px;border:2px solid #212121;cursor:pointer;" +
+      "background:#00695c;color:#fff;box-shadow:2px 2px 0 0 #212121;font-weight:700;font-size:12.5px;"
+    probarBtn.addEventListener("mouseenter", () => (probarBtn.style.background = "#00897b"))
+    probarBtn.addEventListener("mouseleave", () => (probarBtn.style.background = "#00695c"))
+    probarBtn.addEventListener("mousedown", (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+    })
+    probarBtn.addEventListener("click", () => {
+      const original = probarBtn.textContent
+      probarBtn.textContent = "🔊 Leyendo..."
+      const prueba = "Hola, soy la lectura en voz alta de iavirtualuser. Si escuchas esto, el sistema de texto a voz funciona correctamente."
+      speakText(prueba)
+      setTimeout(() => (probarBtn.textContent = original), 1500)
+    })
+
     wrap.appendChild(header)
     wrap.appendChild(toggleOjos.row)
     wrap.appendChild(toggleManos.row)
     wrap.appendChild(toggleSonidos.row)
     wrap.appendChild(toggleLeer.row)
     wrap.appendChild(verBtn)
+    wrap.appendChild(probarBtn)
     document.body.appendChild(wrap)
 
     // Cargar estado persistido
@@ -289,12 +312,20 @@
 
   function speakText(text) {
     try {
-      if (!window.speechSynthesis) return
-      const u = new SpeechSynthesisUtterance(text)
-      u.lang = "es-ES"
-      u.rate = 1
-      u.pitch = 1
-      window.speechSynthesis.speak(u)
+      // Vía nativa (fiable en Electron): TTS de Windows vía IPC/Python
+      const api = window.api || {}
+      if (typeof api.speak === "function") {
+        api.speak(text).catch(() => { /* fallback abajo */ })
+        return
+      }
+      // Fallback: speechSynthesis del navegador
+      if (window.speechSynthesis) {
+        const u = new SpeechSynthesisUtterance(text)
+        u.lang = "es-ES"
+        u.rate = 1
+        u.pitch = 1
+        window.speechSynthesis.speak(u)
+      }
     } catch (e) { /* ignore */ }
   }
 

@@ -170,6 +170,21 @@ $ocHandlers = @(
       return { ok: false, error: String(err) };
     }
   });
+'@ },
+  @{ key = "oc-tts"; block = @'
+  ipcMain.handle("oc-tts", async (_event, texto = "") => {
+    const script = "C:\\proyectos2026\\proyectos\\iavirtualuser\\leer_texto.py";
+    try {
+      const { stdout } = await execFilePromise("python", [script, String(texto)], {
+        windowsHide: true,
+        timeout: 30000
+      });
+      const out = stdout.toString("utf-8") || "";
+      return { ok: out.includes("ERROR") ? false : true, texto: out.trimEnd() };
+    } catch (err) {
+      return { ok: false, error: String((err && err.stderr) || err || "Error TTS") };
+    }
+  });
 '@ }
 )
 
@@ -199,7 +214,8 @@ $ocPreload = @(
   @{ key = "ocDump"; line = "  ocDump: (content) => electron.ipcRenderer.invoke(`"oc-dump`", content)," },
   @{ key = "configGet"; line = "  configGet: () => electron.ipcRenderer.invoke(`"oc-config-get`")," },
   @{ key = "configSet"; line = "  configSet: (data) => electron.ipcRenderer.invoke(`"oc-config-set`", data)," },
-  @{ key = "ocLog"; line = "  ocLog: (msg, level) => electron.ipcRenderer.invoke(`"oc-log`", msg, level)," }
+  @{ key = "ocLog"; line = "  ocLog: (msg, level) => electron.ipcRenderer.invoke(`"oc-log`", msg, level)," },
+  @{ key = "speak"; line = "  speak: (texto) => electron.ipcRenderer.invoke(`"oc-tts`", texto)," }
 )
 foreach ($m in $ocPreload) {
   if ($preloadContent -notmatch $m.key) {
