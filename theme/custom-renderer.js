@@ -393,13 +393,33 @@
     } catch (e) { /* ignore */ }
   }
 
+  function cleanForSpeech(text) {
+    return text
+      .replace(/```[\s\S]*?```/g, " ")
+      .replace(/`([^`]*)`/g, "$1")
+      .replace(/^#{1,6}\s*/gm, "")
+      .replace(/^>\s*/gm, "")
+      .replace(/^\s*[-*+]\s+/gm, "")
+      .replace(/^\s*\d+[.)]\s+/gm, "")
+      .replace(/\|/g, " ")
+      .replace(/^[-=]{3,}$/gm, "")
+      .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
+      .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+      .replace(/\*\*([^*]+)\*\*/g, "$1")
+      .replace(/\*([^*]+)\*/g, "$1")
+      .replace(/[*_~`>]/g, "")
+      .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}]/gu, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+  }
+
   function getLastAssistantText() {
     // El asistente termina su respuesta: buscar el último bloque de texto
     // dentro del timeline. Se prioriza data-timeline-part-id (partes de texto).
     const parts = Array.from(document.querySelectorAll('[data-timeline-part-id]'))
     for (let i = parts.length - 1; i >= 0; i--) {
       const t = (parts[i].textContent || "").trim()
-      if (t.length > 1) return t
+      if (t.length > 1) return cleanForSpeech(t)
     }
     return ""
   }
