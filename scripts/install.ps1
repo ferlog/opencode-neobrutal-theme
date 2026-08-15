@@ -116,9 +116,15 @@ $ocHandlers = @(
     try {
       const raw = await readFile(path, "utf-8");
       const cfg = JSON.parse(raw);
-      return { ok: true, ojos: cfg.ojos !== false, manos: cfg.manos !== false };
+      return {
+        ok: true,
+        ojos: cfg.ojos !== false,
+        manos: cfg.manos !== false,
+        sonidos: cfg.sonidos !== false,
+        leer: cfg.leer === true
+      };
     } catch (err) {
-      return { ok: true, ojos: true, manos: true };
+      return { ok: true, ojos: true, manos: true, sonidos: true, leer: false };
     }
   });
 '@ },
@@ -146,6 +152,14 @@ foreach ($h in $ocHandlers) {
   } else {
     Write-Host "Handler $($h.key) ya presente en main/index.js" -ForegroundColor DarkGray
   }
+}
+
+# Forzar actualización del bloque de retorno de oc-config-get (aunque ya exista)
+$oldGetReturn = 'return { ok: true, ojos: cfg.ojos !== false, manos: cfg.manos !== false };'
+$newGetReturn = 'return { ok: true, ojos: cfg.ojos !== false, manos: cfg.manos !== false, sonidos: cfg.sonidos !== false, leer: cfg.leer === true };'
+if ($mainContent -match [regex]::Escape($oldGetReturn)) {
+  $mainContent = $mainContent -replace [regex]::Escape($oldGetReturn), $newGetReturn
+  Write-Host "oc-config-get: retorno actualizado (sonidos/leer)" -ForegroundColor Cyan
 }
 Set-Content $mainJs $mainContent -NoNewline
 

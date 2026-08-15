@@ -166,6 +166,8 @@
 
     const toggleOjos = makeToggle("👁 Utilizar ojos OCR", "ojos", true, onToggleChange)
     const toggleManos = makeToggle("🖐 Utilizar manos", "manos", true, onToggleChange)
+    const toggleSonidos = makeToggle("🔊 Sonidos", "sonidos", true, onToggleChange)
+    const toggleLeer = makeToggle("🗣 Leer respuesta", "leer", false, onToggleChange)
 
     const verBtn = document.createElement("button")
     verBtn.type = "button"
@@ -186,6 +188,8 @@
     wrap.appendChild(header)
     wrap.appendChild(toggleOjos.row)
     wrap.appendChild(toggleManos.row)
+    wrap.appendChild(toggleSonidos.row)
+    wrap.appendChild(toggleLeer.row)
     wrap.appendChild(verBtn)
     document.body.appendChild(wrap)
 
@@ -197,13 +201,90 @@
           if (r && r.ok) {
             toggleOjos.apply(!!r.ojos)
             toggleManos.apply(!!r.manos)
+            if (typeof r.sonidos !== "undefined") toggleSonidos.apply(!!r.sonidos)
+            if (typeof r.leer !== "undefined") toggleLeer.apply(!!r.leer)
+            applyAudioState()
+            applyTtsState()
           }
         }).catch(() => {})
       }
     } catch (e) { /* ignore */ }
   }
 
+  // ------------------------------------------------------------------
+  // Sonidos: mutear todos los <audio> de OpenCode según el toggle
+  // ------------------------------------------------------------------
+  let sonidosOn = true
+  function applyAudioState() {
+    window.__ocSonidos = sonidosOn
+    document.querySelectorAll("audio, video").forEach((el) => {
+      el.muted = !sonidosOn
+      if (!sonidosOn) {
+        try { el.pause() } catch (e) { /* ignore */ }
+      }
+    })
+  }
+
+  // ------------------------------------------------------------------
+  // Leer respuesta: TTS (speechSynthesis) al terminar una respuesta
+  // ------------------------------------------------------------------
+  let leerOn = false
+  let lastSpoken = ""
+  let ttsObs = null
+
+  function stopSpeaking() {
+    try {
+      if (window.speechSynthesis) window.speechSynthesis.cancel()
+    } catch (e) { /* ignore */ }
+  }
+
+  function speakText(text) {
+    try {
+      if (!window.speechSynthesis) return
+      const u = new SpeechSynthesisUtterance(text)
+      u.lang = "es-ES"
+      u.rate = 1
+      u.pitch = 1
+      window.speechSynthesis.speak(u)
+    } catch (e) { /* ignore */ }
+  }
+
+  function getLastAssistantText() {
+    // El asistente termina su respuesta: buscar el último bloque de texto
+    // dentro del timeline. Se prioriza data-timeline-part-id (partes de texto).
+    const parts = Array.from(document.querySelectorAll('[data-timeline-part-id]'))
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const t = (parts[i].textContent || "").trim()
+      if (t.length > 1) return t
+    }
+    return ""
+  }
+
+  function applyTtsState() {
+    if (!leerOn) { stopSpeaking(); return }
+    if (ttsObs) return
+    // Señal de "respuesta terminada": cuando desaparece el botón Detener
+    // (data-oc-action=stop) y reaparece Enviar, el agente finalizó.
+    let sawStop = false
+    ttsObs = new MutationObserver(function () {
+      if (!leerOn) return
+      const stopBtn = document.querySelector('[data-oc-action="stop"]')
+      if (stopBtn) { sawStop = true; return }
+      if (!sawStop) return
+      // Detener desapareció → respuesta completada
+      sawStop = false
+      const text = getLastAssistantText()
+      if (text && text !== lastSpoken) {
+        lastSpoken = text
+        speakText(text.slice(0, 800))
+      }
+    })
+    ttsObs.observe(document.body, { childList: true, subtree: true })
+  }
+
   function onToggleChange(key, value) {
+    if (key === "sonidos") { sonidosOn = value; applyAudioState() }
+    if (key === "leer") { leerOn = value; applyTtsState() }
     try {
       const api = window.api || {}
       if (typeof api.configSet === "function") {
