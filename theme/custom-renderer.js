@@ -120,6 +120,21 @@
         btn.style.boxShadow = "0 0 0 2px rgba(255,255,255,0.15)"
         btn.style.gap = "8px"
       }
+      // "Copiar respuesta" → botón azul con texto blanco, siempre visible y más ancho
+      if (aria && /copiar respuesta/i.test(aria)) {
+        btn.style.width = "auto"
+        btn.style.minWidth = "150px"
+        btn.style.height = "30px"
+        btn.style.padding = "0 14px"
+        btn.style.background = "#1565c0"
+        btn.style.color = "#fff"
+        btn.style.border = "2px solid #0d47a1"
+        btn.style.borderRadius = "999px"
+        btn.style.justifyContent = "center"
+        btn.style.opacity = "1"
+        btn.style.boxShadow = "0 0 0 2px rgba(255,255,255,0.12)"
+        btn.style.gap = "6px"
+      }
       // Deduplicar etiquetas (ej. "Detener Detener"): si el botón ya tiene
       // el texto nativo, quitar nuestro span y no volver a etiquetarlo.
       const low2 = (btn.textContent || "").toLowerCase()
