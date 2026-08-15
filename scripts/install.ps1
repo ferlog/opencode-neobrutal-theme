@@ -77,6 +77,8 @@ Set-Content $html $content -NoNewline
 # Parchear el proceso principal (main/index.js): handler IPC "oc-ver-pantalla"
 $mainJs = Join-Path $work "extract\out\main\index.js"
 $mainContent = Get-Content $mainJs -Raw
+# Corregir un bug previo: Buffer.split no existe; convertir a string antes
+$mainContent = $mainContent -replace 'const text = stdout\.split\("__FIN_OCR__"\)\[0\] \|\| stdout;', 'const text = stdout.toString("utf-8").split("__FIN_OCR__")[0] || stdout.toString("utf-8");'
 if ($mainContent -notmatch "oc-ver-pantalla") {
   $handlerBlock = @'
   ipcMain.handle("oc-ver-pantalla", async (_event, detalle = false) => {
@@ -86,7 +88,7 @@ if ($mainContent -notmatch "oc-ver-pantalla") {
         windowsHide: true,
         timeout: 30000
       });
-      const text = stdout.split("__FIN_OCR__")[0] || stdout;
+      const text = stdout.toString("utf-8").split("__FIN_OCR__")[0] || stdout.toString("utf-8");
       return { ok: true, texto: text.trimEnd() };
     } catch (err) {
       return { ok: false, error: String((err && err.stderr) || err || "Error OCR") };
@@ -94,11 +96,11 @@ if ($mainContent -notmatch "oc-ver-pantalla") {
   });
 '@
   $mainContent = $mainContent -replace '(ipcMain\.handle\("resolve-app-path"[^\n]*\n)', "`$1$handlerBlock"
-  Set-Content $mainJs $mainContent -NoNewline
   Write-Host "Handler oc-ver-pantalla inyectado en main/index.js" -ForegroundColor Cyan
 } else {
   Write-Host "Handler oc-ver-pantalla ya presente en main/index.js" -ForegroundColor DarkGray
 }
+Set-Content $mainJs $mainContent -NoNewline
 
 # Parchear el preload: exponer window.api.verPantalla
 $preloadJs = Join-Path $work "extract\out\preload\index.js"
