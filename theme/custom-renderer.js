@@ -299,8 +299,8 @@
             toggleOjos.apply(!!r.ojos)
             toggleManos.apply(!!r.manos)
             if (typeof r.sonidos !== "undefined") toggleSonidos.apply(!!r.sonidos)
-            if (typeof r.leer !== "undefined") toggleLeer.apply(!!r.leer)
-            if (typeof r.alarmas !== "undefined") toggleAlarmas.apply(!!r.alarmas)
+            if (typeof r.leer !== "undefined") { toggleLeer.apply(!!r.leer); leerOn = !!r.leer }
+            if (typeof r.alarmas !== "undefined") { toggleAlarmas.apply(!!r.alarmas); alarmasOn = !!r.alarmas }
             applyAudioState()
             applyTtsState()
           }
