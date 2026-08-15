@@ -198,7 +198,7 @@
     const wrap = document.createElement("div")
     wrap.setAttribute("data-oc-panel", "true")
     wrap.style.cssText =
-      "position:fixed;bottom:152px;right:16px;z-index:9999;width:230px;border-radius:14px;" +
+      "position:fixed;bottom:16px;left:16px;z-index:9999;width:230px;border-radius:14px;" +
       "border:2px solid #212121;background:#7b1fa2;box-shadow:4px 4px 0 0 #212121;padding:8px;" +
       "font-family:inherit;"
 
@@ -392,7 +392,7 @@
     const wrap = document.createElement("div")
     wrap.setAttribute("data-oc-menus", "true")
     wrap.style.cssText =
-      "position:fixed;top:74px;right:16px;z-index:9998;width:230px;border-radius:14px;" +
+      "position:fixed;bottom:16px;right:16px;z-index:9998;width:230px;border-radius:14px;" +
       "border:2px solid #212121;background:#00695c;box-shadow:4px 4px 0 0 #212121;padding:8px;" +
       "font-family:inherit;max-height:calc(100vh - 90px);overflow-y:auto;"
 
