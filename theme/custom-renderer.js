@@ -356,12 +356,134 @@
   }
 
   // ------------------------------------------------------------------
+  // 4) Panel de menús permanentes (agentes + tipos de archivo)
+  //    Recolecta la lista de agentes abriendo el selector nativo una vez.
+  // ------------------------------------------------------------------
+  function addMenusPanel() {
+    if (document.querySelector('[data-oc-menus]')) return
+    const wrap = document.createElement("div")
+    wrap.setAttribute("data-oc-menus", "true")
+    wrap.style.cssText =
+      "position:fixed;top:64px;right:16px;z-index:9998;width:230px;border-radius:14px;" +
+      "border:2px solid #212121;background:#00695c;box-shadow:4px 4px 0 0 #212121;padding:8px;" +
+      "font-family:inherit;max-height:calc(100vh - 90px);overflow-y:auto;"
+
+    const header = document.createElement("div")
+    header.textContent = "📋 Menús"
+    header.style.cssText =
+      "font-size:13px;font-weight:800;color:#fff;padding:2px 4px 7px;border-bottom:1px solid rgba(255,255,255,0.15);"
+
+    const agentsBox = document.createElement("div")
+    agentsBox.setAttribute("data-oc-menus-agents", "true")
+    agentsBox.style.cssText = "display:flex;flex-direction:column;gap:4px;margin-top:6px;"
+
+    const filesBox = document.createElement("div")
+    filesBox.setAttribute("data-oc-menus-files", "true")
+    filesBox.style.cssText = "display:flex;flex-direction:column;gap:4px;margin-top:8px;"
+
+    const filesTitle = document.createElement("div")
+    filesTitle.textContent = "Archivos / Partes"
+    filesTitle.style.cssText = "font-size:11px;font-weight:700;color:#a7ffeb;margin:2px 0 4px;"
+
+    wrap.appendChild(header)
+    wrap.appendChild(agentsBox)
+    wrap.appendChild(filesTitle)
+    wrap.appendChild(filesBox)
+    document.body.appendChild(wrap)
+
+    // Botones de tipo de archivo con texto (imágenes, texto, shell, contexto, comando)
+    ;["Imágenes", "Texto", "Shell", "Contexto", "Comando"].forEach((label) => {
+      const b = document.createElement("button")
+      b.type = "button"
+      b.textContent = label
+      b.dataset.ocMenusFile = label.toLowerCase()
+      b.style.cssText =
+        "width:100%;display:inline-flex;align-items:center;justify-content:flex-start;gap:6px;" +
+        "padding:6px 10px;border-radius:8px;border:2px solid #212121;cursor:pointer;" +
+        "background:#004d40;color:#fff;box-shadow:2px 2px 0 0 #212121;font-weight:600;font-size:12px;"
+      b.addEventListener("mouseenter", () => (b.style.background = "#00695c"))
+      b.addEventListener("mouseleave", () => (b.style.background = "#004d40"))
+      // Al hacer clic, abre el menú nativo de adjuntar
+      b.addEventListener("click", (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        const attach = document.querySelector('[data-action="prompt-attach"]')
+        if (attach) attach.click()
+      })
+      filesBox.appendChild(b)
+    })
+
+    // Recolectar agentes: abrir el selector nativo una vez y clonar opciones
+    collectAgents(agentsBox)
+  }
+
+  function collectAgents(agentsBox) {
+    try {
+      const trigger = document.querySelector('[data-action="prompt-agent"]') ||
+        document.querySelector('button[aria-label="Elegir agente"]')
+      if (!trigger) {
+        agentsBox.textContent = "(selector no disponible)"
+        return
+      }
+      trigger.click()
+      setTimeout(() => {
+        try {
+          // El menú nativo recién abierto expone sus opciones en el DOM
+          const options = Array.from(document.querySelectorAll('[role="option"], [role="menuitemradio"], [data-slot*="option"]'))
+          const names = []
+          options.forEach((o) => {
+            const t = (o.textContent || "").trim()
+            if (t && t.length > 1 && !names.includes(t)) names.push(t)
+          })
+          // Cerrar el menú nativo (clic fuera / Escape)
+          document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }))
+          if (names.length === 0) { agentsBox.textContent = "(sin agentes detectados)"; return }
+          agentsBox.textContent = ""
+          names.forEach((name) => {
+            const b = document.createElement("button")
+            b.type = "button"
+            b.textContent = "🤖 " + name
+            b.dataset.ocMenusAgent = name
+            b.style.cssText =
+              "width:100%;display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;" +
+              "border:2px solid #212121;cursor:pointer;background:#37474f;color:#fff;" +
+              "box-shadow:2px 2px 0 0 #212121;font-weight:600;font-size:12px;text-align:left;"
+            b.addEventListener("mouseenter", () => (b.style.background = "#455a64"))
+            b.addEventListener("mouseleave", () => (b.style.background = "#37474f"))
+            // Clic en un agente → abre el selector y elige ese agente
+            b.addEventListener("click", (e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              const trigger2 = document.querySelector('[data-action="prompt-agent"]') ||
+                document.querySelector('button[aria-label="Elegir agente"]')
+              if (!trigger2) return
+              trigger2.click()
+              setTimeout(() => {
+                const opt = Array.from(document.querySelectorAll('[role="option"], [role="menuitemradio"], [data-slot*="option"]'))
+                  .find((o) => (o.textContent || "").trim() === name)
+                if (opt) opt.click()
+                else document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }))
+              }, 150)
+            })
+            agentsBox.appendChild(b)
+          })
+        } catch (e2) {
+          agentsBox.textContent = "(error al leer agentes)"
+        }
+      }, 350)
+    } catch (e) {
+      agentsBox.textContent = "(error)"
+    }
+  }
+
+  // ------------------------------------------------------------------
   // Arranque
   // ------------------------------------------------------------------
   let attempts = 0
   function run() {
     enhance()
     addControlPanel()
+    addMenusPanel()
     if (attempts < 12) {
       attempts++
       setTimeout(run, 1200)
