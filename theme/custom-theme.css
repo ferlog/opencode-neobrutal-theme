@@ -112,6 +112,56 @@ button[data-variant="primary"]:active,
     inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
+/* ---------- BOTONES ENVIAR / DETENER: color y tamaño ---------- */
+/* Enviar = verde (acción "ir"), Detener = rojo (color universal de "stop") */
+[data-component="icon-button"][data-oc-action="send"],
+[data-component="icon-button"][data-oc-action="stop"] {
+  width: auto !important;
+  height: 34px !important;
+  aspect-ratio: auto !important;
+  flex-shrink: 1 !important;
+  padding: 0 12px !important;
+  gap: 6px !important;
+  border-radius: 999px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  white-space: nowrap !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  border: 2px solid var(--m-color-text) !important;
+}
+
+[data-component="icon-button"][data-oc-action="send"] {
+  background: #2e7d32 !important;
+  color: #fff !important;
+  box-shadow:
+    3px 3px 0 0 var(--m-color-text),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+}
+[data-component="icon-button"][data-oc-action="send"]:hover:not(:disabled) {
+  background: #1b5e20 !important;
+}
+[data-component="icon-button"][data-oc-action="send"]:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 0 var(--m-color-text) !important;
+}
+
+[data-component="icon-button"][data-oc-action="stop"] {
+  background: #c62828 !important;
+  color: #fff !important;
+  box-shadow:
+    3px 3px 0 0 var(--m-color-text),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+}
+[data-component="icon-button"][data-oc-action="stop"]:hover:not(:disabled) {
+  background: #b71c1c !important;
+}
+[data-component="icon-button"][data-oc-action="stop"]:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 0 var(--m-color-text) !important;
+}
+
 /* ---------- Tarjetas / paneles: neumorfismo ---------- */
 [data-component*="card"],
 [data-slot*="panel"],

@@ -53,8 +53,10 @@
 
       if (isStop(btn)) {
         addLabel(btn, "Detener")
+        btn.dataset.ocAction = "stop"
       } else if (isSend(btn)) {
         addLabel(btn, "Enviar")
+        btn.dataset.ocAction = "send"
       }
     })
   }
