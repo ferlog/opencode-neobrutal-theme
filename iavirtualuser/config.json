@@ -1,6 +1,6 @@
 {
-  "leer": true,
-  "alarmas": true,
+  "leer": false,
+  "alarmas": false,
   "sonidos": true,
   "manos": true,
   "ojos": true

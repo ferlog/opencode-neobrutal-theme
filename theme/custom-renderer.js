@@ -135,12 +135,21 @@
         btn.style.boxShadow = "0 0 0 2px rgba(255,255,255,0.12)"
         btn.style.gap = "6px"
       }
-      // "Menú de OpenCode" e "Inicio" → dos botones oscuros de colores distintos
+      // "Menú de OpenCode" → sacarlo de la barra superior y ponerlo flotando
+      // encima del panel iavirtualuser (abajo a la izquierda)
       if (aria && /menú de opencode/i.test(aria)) {
+        btn.style.position = "fixed"
         btn.style.width = "150px"
         btn.style.height = "34px"
-        btn.style.position = "relative"
-        btn.style.left = "70px"
+        btn.style.zIndex = "10000"
+        btn.style.left = "16px"
+        const panel = document.querySelector("[data-oc-panel]")
+        let fromBottom = 400
+        if (panel) {
+          const pr = panel.getBoundingClientRect()
+          fromBottom = window.innerHeight - pr.top
+        }
+        btn.style.bottom = fromBottom + 12 + "px"
         btn.style.padding = "0 16px"
         btn.style.background = "#1a237e"
         btn.style.color = "#fff"
@@ -577,9 +586,25 @@
   // Arranque
   // ------------------------------------------------------------------
   let attempts = 0
+  // ------------------------------------------------------------------
+  // 3) Desplazar la franja de pestañas a la derecha (evitar encimarse
+  //    con los botones Menú/Inicio)
+  // ------------------------------------------------------------------
+  function shiftTabs() {
+    try {
+      const tabList = document.querySelector('[data-titlebar-tab-list]')
+      if (!tabList) return
+      tabList.style.position = "relative"
+      tabList.style.left = "200px"
+      tabList.style.zIndex = "50"
+      ocLog("shiftTabs: franja de pestañas desplazada 200px a la derecha", "debug")
+    } catch (e) { /* ignore */ }
+  }
+
   function run() {
     enhance()
     addControlPanel()
+    shiftTabs()
     if (attempts < 14) {
       attempts++
       ocLog("run: attempt " + attempts, "debug")
@@ -661,6 +686,19 @@
         }
         lines.push(`MSG ${m.getAttribute("data-message-id")} ${attrs.join(" ")} :: ${(m.textContent || "").trim().slice(0, 50)}`)
       })
+      lines.push("")
+      lines.push("=== TAB STRIP ===")
+      const tl = document.querySelector('[data-titlebar-tab-list]')
+      if (tl) {
+        const r = tl.getBoundingClientRect()
+        lines.push(`TABLIST x=${Math.round(r.x)} y=${Math.round(r.y)} w=${Math.round(r.width)} h=${Math.round(r.height)} pos=${tl.style.position} L=${tl.style.left} parentW=${tl.parentElement ? Math.round(tl.parentElement.getBoundingClientRect().width) : "-"}`)
+        tl.querySelectorAll('[data-titlebar-tab], [data-tab-key], a[href]').forEach((t) => {
+          const tr = t.getBoundingClientRect()
+          lines.push(`  TAB x=${Math.round(tr.x)} w=${Math.round(tr.width)} txt="${(t.textContent || "").trim().slice(0, 30)}"`)
+        })
+      } else {
+        lines.push("NO tab-list")
+      }
       lines.push("")
       lines.push("=== TOP BAR RECTS ===")
       document.querySelectorAll("button").forEach((b) => {
