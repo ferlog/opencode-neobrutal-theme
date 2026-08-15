@@ -646,6 +646,14 @@
         lines.push(`MSG ${m.getAttribute("data-message-id")} ${attrs.join(" ")} :: ${(m.textContent || "").trim().slice(0, 50)}`)
       })
       lines.push("")
+      lines.push("=== TOP BAR RECTS ===")
+      document.querySelectorAll("button").forEach((b) => {
+        const r = b.getBoundingClientRect()
+        if (r.y < 70 && r.width > 0) {
+          lines.push(`RECT aria="${(b.getAttribute("aria-label") || "").slice(0, 30)}" x=${Math.round(r.x)} y=${Math.round(r.y)} w=${Math.round(r.width)} h=${Math.round(r.height)}`)
+        }
+      })
+      lines.push("")
       lines.push("=== DATA ATTRS (inventario) ===")
       const attrNames = {}
       document.querySelectorAll("body *").forEach((el) => {
