@@ -61,15 +61,29 @@ if (Test-Path $RendererJs) {
   Write-Host "custom-renderer.js copiado" -ForegroundColor Cyan
 }
 
-# Inyectar la referencia en index.html (si no está ya)
+# Inyectar la referencia en index.html de forma ROBUSTA.
+# ADVERTENCIA: no anidar el <script defer> dentro del <script type="module">,
+# porque ese script module en OpenCode se abre sin cierre en la misma línea y
+# el navegador ignoraría custom-renderer.js (lo trataría como contenido del
+# module con src). Primero quitamos cualquier inyección previa malformada y
+# luego insertamos el defer como tag hermano independiente antes de </head>.
 $html = Join-Path $renderer "index.html"
 $content = Get-Content $html -Raw
+
+# 1) Sanear: quitar cualquier <script defer src="./custom-renderer.js"> previo
+#    (incluso si quedó anidado dentro del module en ejecuciones anteriores).
+$content = $content -replace '(?m)\s*<script[^>]*custom-renderer\.js[^>]*></script>', ""
+
+# 2) Inyectar custom-theme.css si falta (como link hermano, antes de </head>)
 if ($content -notmatch "custom-theme.css") {
-  $content = $content -replace '(rel="stylesheet"[^>]*main-[^"]+\.css">)', "`$1`n    <link rel=`"stylesheet`" crossorigin href=`"./custom-theme.css`">"
+  $content = $content -replace '</head>', "    <link rel=`"stylesheet`" crossorigin href=`"./custom-theme.css`">`n  </head>"
   Write-Host "Referencia a custom-theme.css inyectada en index.html" -ForegroundColor Cyan
 }
+
+# 3) Insertar custom-renderer.js justo antes de </head> (tag independiente,
+#    nunca anidado en el module script). Si ya existe, no se duplica.
 if ($content -notmatch "custom-renderer.js") {
-  $content = $content -replace '(<script type="module"[^>]*main-[^"]+\.js">)', "`$1`n    <script defer src=`"./custom-renderer.js`"></script>"
+  $content = $content -replace '</head>', "    <script defer src=`"./custom-renderer.js`"></script>`n  </head>"
   Write-Host "Referencia a custom-renderer.js inyectada en index.html" -ForegroundColor Cyan
 }
 Set-Content $html $content -NoNewline
@@ -199,6 +213,36 @@ Set-Content $preloadJs $preloadContent -NoNewline
 
 # Re-empaquetar
 Write-Host "Re-empaquetando app.asar..." -ForegroundColor Cyan
+
+# --- Sistema de versiones + deshacer -------------------------------------
+# Guardar una copia versionada del app.asar ACTUAL (el que se va a
+# sobrescribir) en una carpeta de versiones, con fecha y hora. Esto permite
+# deshacer cualquier cambio a posteriori.
+$versDir = Join-Path $env:TEMP "opencode-neobrutal-work\versiones"
+New-Item -ItemType Directory -Force -Path $versDir | Out-Null
+$stamp = Get-Date -Format "yyyyMMdd-HHmmss"
+$verFile = Join-Path $versDir "app.asar.$stamp"
+if (Test-Path $AppPath) {
+  Copy-Item $AppPath $verFile -Force
+  Write-Host "Version guardada: $verFile" -ForegroundColor Cyan
+}
+# Guardar también el HTML/JS del theme que se aplica (fuente de verdad)
+$themeVerDir = Join-Path $env:TEMP "opencode-neobrutal-work\versiones\theme-$stamp"
+New-Item -ItemType Directory -Force -Path $themeVerDir | Out-Null
+if (Test-Path $ThemeCss)  { Copy-Item $ThemeCss (Join-Path $themeVerDir "custom-theme.css") -Force }
+if (Test-Path $RendererJs){ Copy-Item $RendererJs (Join-Path $themeVerDir "custom-renderer.js") -Force }
+# Punto de restauración más reciente (se actualiza en cada instalación)
+$lastGood = Join-Path $env:TEMP "opencode-neobrutal-work\app.asar.last-good"
+if (Test-Path $AppPath) { Copy-Item $AppPath $lastGood -Force }
+# -------------------------------------------------------------------------
+
 & $node $asarCli.FullName pack (Join-Path $work "extract") $AppPath
 
+# Registrar fecha/hora de esta instalación
+$histFile = Join-Path $env:TEMP "opencode-neobrutal-work\historial.txt"
+Add-Content $histFile "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] Instalación aplicada. Version: $stamp"
+Write-Host "Historial: $histFile" -ForegroundColor DarkGray
+
 Write-Host "Tema aplicado. Cierra y vuelve a abrir OpenCode para ver los cambios." -ForegroundColor Green
+Write-Host "Para deshacer: ejecuta .\scripts\install.ps1 -Restore  (vuelve al original)"
+Write-Host "  o restaura la última buena: $lastGood" -ForegroundColor DarkGray
