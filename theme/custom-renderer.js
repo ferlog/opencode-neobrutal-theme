@@ -449,14 +449,19 @@
   }
 
   function extractBetweenMarkers(text) {
-    const startWord = "inicio de respuesta"
-    const endWord = "fin de respuesta"
-    const startIdx = text.toLowerCase().lastIndexOf(startWord)
-    if (startIdx === -1) return text
-    const after = startIdx + startWord.length
-    const endIdx = text.toLowerCase().indexOf(endWord, after)
-    if (endIdx === -1) return text.substring(after)
-    return text.substring(after, endIdx)
+    // Lee SOLO el contenido entre el renglón "inicio de respuesta" y el
+    // renglón "fin de respuesta" (los marcadores pueden llevar hora/fecha).
+    const lines = text.split(/\r?\n/)
+    let start = -1
+    let end = -1
+    for (let i = 0; i < lines.length; i++) {
+      const l = lines[i].toLowerCase()
+      if (start === -1 && l.includes("inicio de respuesta")) start = i
+      if (l.includes("fin de respuesta")) end = i
+    }
+    if (start === -1) return text
+    if (end === -1) end = lines.length
+    return lines.slice(start + 1, end).join(" ")
   }
 
   function getLastAssistantText() {
