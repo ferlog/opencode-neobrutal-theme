@@ -9,6 +9,32 @@
   "use strict"
 
   // ------------------------------------------------------------------
+  // 0) Logging de errores (renderer → archivo temp vía IPC)
+  // ------------------------------------------------------------------
+  function ocLog(msg, level) {
+    try {
+      const api = window.api || {}
+      if (typeof api.ocLog === "function") {
+        api.ocLog(String(msg), level || "info").catch(() => {})
+      }
+    } catch (e) { /* ignore */ }
+  }
+  try {
+    window.addEventListener("error", (ev) => {
+      ocLog("ERROR: " + (ev.message || "") + " @ " + (ev.filename || "") + ":" + (ev.lineno || ""), "error")
+    })
+    window.addEventListener("unhandledrejection", (ev) => {
+      ocLog("UNHANDLEDREJECTION: " + ((ev.reason && (ev.reason.stack || ev.reason.message)) || String(ev.reason)), "error")
+    })
+    const origErr = console.error
+    console.error = function () {
+      try { ocLog("CONSOLE.ERROR: " + Array.prototype.slice.call(arguments).join(" "), "error") } catch (e) { /* ignore */ }
+      return origErr.apply(console, arguments)
+    }
+    ocLog("custom-renderer cargado en " + location.pathname, "info")
+  } catch (e) { /* ignore */ }
+
+  // ------------------------------------------------------------------
   // 1) Etiquetas de texto en botones de icono (Enviar / Detener)
   // ------------------------------------------------------------------
   function addLabel(btn, text) {
@@ -167,6 +193,7 @@
 
   function addControlPanel() {
     if (document.querySelector('[data-oc-panel]')) return
+    ocLog("addControlPanel: creando panel", "debug")
 
     const wrap = document.createElement("div")
     wrap.setAttribute("data-oc-panel", "true")
@@ -361,6 +388,7 @@
   // ------------------------------------------------------------------
   function addMenusPanel() {
     if (document.querySelector('[data-oc-menus]')) return
+    ocLog("addMenusPanel: creando panel menús", "debug")
     const wrap = document.createElement("div")
     wrap.setAttribute("data-oc-menus", "true")
     wrap.style.cssText =
@@ -428,9 +456,11 @@
         document.querySelector('button[aria-label="Elegir agente"]')
       if (!trigger) {
         agentsBox.textContent = "(selector no disponible)"
+        ocLog("collectAgents: selector no disponible (attempt)", "warn")
         return
       }
       agentsBox.textContent = "(cargando agentes...)"
+      ocLog("collectAgents: abriendo selector nativo", "debug")
       trigger.click()
       setTimeout(() => {
         try {
@@ -443,6 +473,7 @@
           })
           // Cerrar el menú nativo (clic fuera / Escape)
           document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }))
+          ocLog("collectAgents: opciones detectadas=" + JSON.stringify(names), "debug")
           if (names.length === 0) { agentsBox.textContent = "(sin agentes detectados)"; return }
           agentsCollected = true
           agentsBox.textContent = ""
@@ -496,6 +527,7 @@
     }
     if (attempts < 14) {
       attempts++
+      ocLog("run: attempt " + attempts, "debug")
       setTimeout(run, 1200)
     }
   }
@@ -558,8 +590,16 @@
         lines.push(`TOP ${el.getAttribute("data-component") || el.getAttribute("data-slot") || el.className.slice(0, 60)}`)
       })
       api.ocDump(lines.join("\n")).catch(() => {})
+      ocLog("ocDump generado: " + lines.length + " líneas", "debug")
     } catch (e) { /* ignore */ }
   }
   setTimeout(ocDump, 5000)
   // ------------------------------------------------------------------
 })()
+
+// Log de carga del script (fuera del IIFE para atrapar errores de parseo)
+try {
+  if (window.api && typeof window.api.ocLog === "function") {
+    window.api.ocLog("custom-renderer.js evaluado OK", "info").catch(() => {})
+  }
+} catch (e) { /* ignore */ }

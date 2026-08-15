@@ -142,6 +142,20 @@ $ocHandlers = @(
       return { ok: false, error: String(err) };
     }
   });
+'@ },
+  @{ key = "oc-log"; block = @'
+  ipcMain.handle("oc-log", async (_event, msg, level = "info") => {
+    try {
+      const path = "C:\\Users\\Fernando\\AppData\\Local\\Temp\\opencode\\oc-renderer.log";
+      const line = `[${new Date().toISOString()}] [${level}] ${msg}\n`;
+      const fh = await open(path, "a");
+      await fh.writeFile(line);
+      await fh.close();
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, error: String(err) };
+    }
+  });
 '@ }
 )
 
@@ -170,7 +184,8 @@ $ocPreload = @(
   @{ key = "verPantalla"; line = "  verPantalla: (detalle) => electron.ipcRenderer.invoke(`"oc-ver-pantalla`", detalle)," },
   @{ key = "ocDump"; line = "  ocDump: (content) => electron.ipcRenderer.invoke(`"oc-dump`", content)," },
   @{ key = "configGet"; line = "  configGet: () => electron.ipcRenderer.invoke(`"oc-config-get`")," },
-  @{ key = "configSet"; line = "  configSet: (data) => electron.ipcRenderer.invoke(`"oc-config-set`", data)," }
+  @{ key = "configSet"; line = "  configSet: (data) => electron.ipcRenderer.invoke(`"oc-config-set`", data)," },
+  @{ key = "ocLog"; line = "  ocLog: (msg, level) => electron.ipcRenderer.invoke(`"oc-log`", msg, level)," }
 )
 foreach ($m in $ocPreload) {
   if ($preloadContent -notmatch $m.key) {
