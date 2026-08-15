@@ -137,10 +137,10 @@
       }
       // "Menú de OpenCode" e "Inicio" → dos botones oscuros de colores distintos
       if (aria && /menú de opencode/i.test(aria)) {
-        btn.style.width = "auto"
-        btn.style.minWidth = "160px"
+        btn.style.width = "150px"
         btn.style.height = "34px"
-        btn.style.marginLeft = "10px"
+        btn.style.position = "relative"
+        btn.style.left = "70px"
         btn.style.padding = "0 16px"
         btn.style.background = "#1a237e"
         btn.style.color = "#fff"
@@ -154,10 +154,10 @@
         btn.style.boxShadow = "0 0 0 2px rgba(255,255,255,0.12)"
       }
       if (aria && /^inicio$/i.test(aria)) {
-        btn.style.width = "auto"
-        btn.style.minWidth = "120px"
+        btn.style.width = "120px"
         btn.style.height = "34px"
-        btn.style.marginLeft = "6px"
+        btn.style.position = "relative"
+        btn.style.left = "176px"
         btn.style.padding = "0 16px"
         btn.style.background = "#004d40"
         btn.style.color = "#fff"
