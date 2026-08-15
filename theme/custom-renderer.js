@@ -417,7 +417,12 @@
     collectAgents(agentsBox)
   }
 
+  let agentsCollected = false
+  let agentsBoxRef = null
+
   function collectAgents(agentsBox) {
+    agentsBoxRef = agentsBox
+    if (agentsCollected || !agentsBox) return
     try {
       const trigger = document.querySelector('[data-action="prompt-agent"]') ||
         document.querySelector('button[aria-label="Elegir agente"]')
@@ -425,6 +430,7 @@
         agentsBox.textContent = "(selector no disponible)"
         return
       }
+      agentsBox.textContent = "(cargando agentes...)"
       trigger.click()
       setTimeout(() => {
         try {
@@ -438,6 +444,7 @@
           // Cerrar el menú nativo (clic fuera / Escape)
           document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }))
           if (names.length === 0) { agentsBox.textContent = "(sin agentes detectados)"; return }
+          agentsCollected = true
           agentsBox.textContent = ""
           names.forEach((name) => {
             const b = document.createElement("button")
@@ -484,7 +491,10 @@
     enhance()
     addControlPanel()
     addMenusPanel()
-    if (attempts < 12) {
+    if (!agentsCollected && attempts < 14) {
+      collectAgents(agentsBoxRef)
+    }
+    if (attempts < 14) {
       attempts++
       setTimeout(run, 1200)
     }
@@ -511,16 +521,27 @@
       const api = window.api || {}
       if (typeof api.ocDump !== "function") return
       const lines = []
-      lines.push("=== BUTTONS (texto + attrs) ===")
+      lines.push("=== BUTTONS (texto + attrs + SIZE) ===")
       document.querySelectorAll("button").forEach((b) => {
-        const txt = (b.textContent || "").trim().slice(0, 20)
+        const txt = (b.textContent || "").trim().slice(0, 24)
+        const rect = b.getBoundingClientRect()
+        const sz = `size=${Math.round(rect.width)}x${Math.round(rect.height)}`
         const attrs = []
         for (const a of b.attributes) {
           if (/data-|aria-|title|class|role/.test(a.name)) attrs.push(`${a.name}=${a.value.slice(0, 60)}`)
         }
-        if (txt || /data-component|data-slot|titlebar/.test(b.outerHTML)) {
-          lines.push(`BTN txt="${txt}" ${attrs.join(" ")}`)
-        }
+        lines.push(`BTN "${txt}" ${sz} ${attrs.join(" ")}`)
+      })
+      lines.push("")
+      lines.push("=== TITLEBAR RIGHT (window controls) ===")
+      const tr = document.getElementById("opencode-titlebar-right") ||
+        document.querySelector('[id*="titlebar"][id*="right"]')
+      lines.push(tr ? tr.outerHTML.slice(0, 4000) : "NO titlebar-right")
+      lines.push("")
+      lines.push("=== WINDOW CONTROL BUTTONS ===")
+      document.querySelectorAll('button[aria-label*="minim"], button[aria-label*="maxim"], button[aria-label*="cerrar"], button[aria-label*="close"], button[data-slot*="window"]').forEach((b) => {
+        const r = b.getBoundingClientRect()
+        lines.push(`WINBTN aria="${b.getAttribute("aria-label")}" size=${Math.round(r.width)}x${Math.round(r.height)} ${b.outerHTML.slice(0, 400)}`)
       })
       lines.push("")
       lines.push("=== DOCK-PROMPT ===")
