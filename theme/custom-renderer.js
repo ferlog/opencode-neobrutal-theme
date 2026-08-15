@@ -448,13 +448,24 @@
       .trim()
   }
 
+  function extractBetweenMarkers(text) {
+    const startWord = "inicio de respuesta"
+    const endWord = "fin de respuesta"
+    const startIdx = text.toLowerCase().lastIndexOf(startWord)
+    if (startIdx === -1) return text
+    const after = startIdx + startWord.length
+    const endIdx = text.toLowerCase().indexOf(endWord, after)
+    if (endIdx === -1) return text.substring(after)
+    return text.substring(after, endIdx)
+  }
+
   function getLastAssistantText() {
     // El asistente termina su respuesta: buscar el último bloque de texto
     // dentro del timeline. Se prioriza data-timeline-part-id (partes de texto).
     const parts = Array.from(document.querySelectorAll('[data-timeline-part-id]'))
     for (let i = parts.length - 1; i >= 0; i--) {
       const t = (parts[i].textContent || "").trim()
-      if (t.length > 1) return cleanForSpeech(t)
+      if (t.length > 1) return cleanForSpeech(extractBetweenMarkers(t))
     }
     return ""
   }
@@ -650,7 +661,9 @@
       document.querySelectorAll("button").forEach((b) => {
         const r = b.getBoundingClientRect()
         if (r.y < 70 && r.width > 0) {
-          lines.push(`RECT aria="${(b.getAttribute("aria-label") || "").slice(0, 30)}" x=${Math.round(r.x)} y=${Math.round(r.y)} w=${Math.round(r.width)} h=${Math.round(r.height)}`)
+          const p = b.parentElement
+          const pr = p ? p.getBoundingClientRect() : null
+          lines.push(`RECT aria="${(b.getAttribute("aria-label") || "").slice(0, 30)}" x=${Math.round(r.x)} y=${Math.round(r.y)} w=${Math.round(r.width)} h=${Math.round(r.height)} parentX=${pr ? Math.round(pr.x) : "-"} parentW=${pr ? Math.round(pr.width) : "-"} pos=${(b.style.position || "static")} L=${b.style.left || "-"} M=${b.style.marginLeft || "-"}`)
         }
       })
       lines.push("")
