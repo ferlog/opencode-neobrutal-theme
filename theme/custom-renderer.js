@@ -330,6 +330,8 @@
   let lastSpoken = ""
   let alarmasOn = true
   let ttsObs = null
+  let lastSeen = ""
+  let readTimer = null
 
   function playAlarma() {
     try {
@@ -380,25 +382,29 @@
     if (!leerOn) { stopSpeaking() }
     // El observer se mantiene activo mientras haga falta leer o sonar la alarma.
     if ((!leerOn && !alarmasOn) || ttsObs) return
-    // Señal de "respuesta terminada": cuando desaparece el botón Detener
-    // (data-oc-action=stop) y reaparece Enviar, el agente finalizó.
-    let sawStop = false
+    // Detección de "respuesta terminada" robusta (funciona también en
+    // respuestas rápidas, sin depender del botón Detener): cuando el texto de
+    // la última parte del asistente deja de cambiar durante un breve instante,
+    // consideramos que la respuesta se completó → alarma y/o lectura.
     ttsObs = new MutationObserver(function () {
-      const stopBtn = document.querySelector('[data-oc-action="stop"]')
-      if (stopBtn) { sawStop = true; return }
-      if (!sawStop) return
-      // Detener desapareció → respuesta completada
-      sawStop = false
-      if (alarmasOn) playAlarma()
-      if (leerOn) {
-        const text = getLastAssistantText()
-        if (text && text !== lastSpoken) {
-          lastSpoken = text
-          speakText(text.slice(0, 800))
+      if (!leerOn && !alarmasOn) return
+      const text = getLastAssistantText()
+      if (!text) return
+      if (text === lastSeen) return
+      lastSeen = text
+      clearTimeout(readTimer)
+      readTimer = setTimeout(() => {
+        const now = getLastAssistantText()
+        if (now && now === lastSeen && now !== lastSpoken) {
+          if (alarmasOn) playAlarma()
+          if (leerOn) {
+            lastSpoken = now
+            speakText(now.slice(0, 800))
+          }
         }
-      }
+      }, 1200)
     })
-    ttsObs.observe(document.body, { childList: true, subtree: true })
+    ttsObs.observe(document.body, { childList: true, subtree: true, characterData: true })
   }
 
   function onToggleChange(key, value) {
