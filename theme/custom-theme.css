@@ -231,3 +231,92 @@ h1, h2, h3, h4,
   overflow-y: visible !important;
 }
 
+/* =====================================================================
+   Texto enriquecido a color en las respuestas del asistente (Markdown)
+   ===================================================================== */
+[data-timeline-part-id] h1,
+[data-timeline-part-id] h2,
+[data-timeline-part-id] h3,
+[data-timeline-part-id] h4 {
+  color: #ff7043;            /* naranja cálido */
+  font-weight: 800;
+  line-height: 1.25;
+  margin: 0.6em 0 0.3em;
+  letter-spacing: 0.01em;
+}
+[data-timeline-part-id] h1 { font-size: 1.45em; color: #ff5722; }
+[data-timeline-part-id] h2 { font-size: 1.25em; color: #ff8a65; }
+[data-timeline-part-id] h3 { font-size: 1.1em;  color: #ffab91; }
+[data-timeline-part-id] h4 { font-size: 1em;    color: #ffccbc; }
+
+[data-timeline-part-id] strong {
+  color: #4fc3f7;            /* azul claro */
+  font-weight: 800;
+}
+[data-timeline-part-id] em {
+  color: #b39ddb;            /* violeta */
+}
+[data-timeline-part-id] del {
+  color: #ef5350;            /* rojo tachado */
+}
+[data-timeline-part-id] a {
+  color: #40c4ff !important;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+[data-timeline-part-id] a:hover { color: #00e5ff !important; }
+
+[data-timeline-part-id] ul li::marker,
+[data-timeline-part-id] ol li::marker {
+  color: #ffd740;            /* ámbar */
+  font-weight: 800;
+}
+
+[data-timeline-part-id] blockquote {
+  border-left: 4px solid #ff6d00;
+  background: rgba(255, 109, 0, 0.12);
+  padding: 0.4em 0.8em;
+  border-radius: 0 8px 8px 0;
+  color: #ffe0b2;
+  margin: 0.5em 0;
+}
+[data-timeline-part-id] blockquote strong { color: #ffb74d; }
+
+[data-timeline-part-id] code {
+  color: #80deea;
+  background: rgba(128, 222, 234, 0.12);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  font-weight: 600;
+}
+[data-timeline-part-id] pre {
+  background: #1b1b2f;
+  border: 1px solid #3d3d5c;
+  border-left: 4px solid #00bcd4;
+  border-radius: 8px;
+  padding: 0.6em 0.8em;
+  overflow-x: auto;
+}
+[data-timeline-part-id] pre code { background: transparent; color: #e0f7fa; }
+
+[data-timeline-part-id] table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.5em 0;
+}
+[data-timeline-part-id] th {
+  background: #263238;
+  color: #ffd740;
+  font-weight: 800;
+  text-align: left;
+  padding: 0.4em 0.6em;
+  border: 1px solid #455a64;
+}
+[data-timeline-part-id] td {
+  padding: 0.35em 0.6em;
+  border: 1px solid #455a64;
+  color: #eceff1;
+}
+[data-timeline-part-id] tr:nth-child(even) td { background: rgba(38, 50, 56, 0.35); }
+
+
