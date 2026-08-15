@@ -140,21 +140,29 @@
         btn.style.width = "auto"
         btn.style.minWidth = "170px"
         btn.style.height = "34px"
+        btn.style.marginLeft = "10px"
         btn.style.padding = "0 14px"
         btn.style.border = "1px solid rgba(255,255,255,0.22)"
         btn.style.borderRadius = "8px"
-        btn.style.justifyContent = "flex-start"
+        btn.style.justifyContent = "center"
         btn.style.gap = "8px"
+        btn.style.whiteSpace = "nowrap"
+        btn.style.overflow = "visible"
+        btn.style.flexShrink = "0"
       }
       if (aria && /^inicio$/i.test(aria)) {
         btn.style.width = "auto"
         btn.style.minWidth = "90px"
         btn.style.height = "34px"
+        btn.style.marginLeft = "6px"
         btn.style.padding = "0 14px"
         btn.style.border = "1px solid rgba(255,255,255,0.22)"
         btn.style.borderRadius = "8px"
         btn.style.justifyContent = "center"
         btn.style.gap = "6px"
+        btn.style.whiteSpace = "nowrap"
+        btn.style.overflow = "visible"
+        btn.style.flexShrink = "0"
       }
       // Deduplicar etiquetas (ej. "Detener Detener"): si el botón ya tiene
       // el texto nativo, quitar nuestro span y no volver a etiquetarlo.
