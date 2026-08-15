@@ -391,73 +391,12 @@
 
 
   // ------------------------------------------------------------------
-  // 5) HUD de uso de contexto y costo (junto al chat)
-  //    Escanea el DOM y captura "Uso %" y "Costo" del panel/tooltip de
-  //    contexto cuando se renderizan, mostrándolos de forma permanente.
-  // ------------------------------------------------------------------
-  let hud = null
-  function addUsageHud() {
-    if (document.querySelector('[data-oc-hud]')) return
-    ocLog("addUsageHud: creando HUD", "debug")
-    hud = document.createElement("div")
-    hud.setAttribute("data-oc-hud", "true")
-    hud.style.cssText =
-      "position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:9997;" +
-      "display:flex;align-items:center;gap:18px;padding:8px 16px;border-radius:12px;" +
-      "border:2px solid #212121;background:#263238;box-shadow:3px 3px 0 0 #212121;" +
-      "font-family:inherit;pointer-events:none;"
-
-    const uso = document.createElement("span")
-    uso.setAttribute("data-oc-hud-uso", "true")
-    uso.textContent = "Uso: --"
-    uso.style.cssText = "font-size:24px;font-weight:800;color:#fff;white-space:nowrap;"
-
-    const costo = document.createElement("span")
-    costo.setAttribute("data-oc-hud-costo", "true")
-    costo.textContent = "Costo: --"
-    costo.style.cssText = "font-size:24px;font-weight:800;color:#80cbc4;white-space:nowrap;"
-
-    hud.appendChild(uso)
-    hud.appendChild(costo)
-    document.body.appendChild(hud)
-  }
-
-  function scanUsageHud() {
-    if (!hud) return
-    try {
-      // Buscar el texto "N%" (uso) y un valor de costo ($ / us$) en todo el DOM
-      let uso = null
-      let cost = null
-      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
-        acceptNode: (node) => {
-          const t = (node.textContent || "").trim()
-          if (!t) return NodeFilter.FILTER_REJECT
-          return NodeFilter.FILTER_ACCEPT
-        }
-      })
-      let n
-      while ((n = walker.nextNode())) {
-        const t = (n.textContent || "").trim()
-        if (uso === null && /^\d{1,3}(\.\d+)?%$/.test(t)) uso = t
-        if (cost === null && /\$\s*\d/.test(t)) cost = t
-        if (uso && cost) break
-      }
-      const usoEl = hud.querySelector('[data-oc-hud-uso]')
-      const costEl = hud.querySelector('[data-oc-hud-costo]')
-      if (uso && usoEl) usoEl.textContent = "Uso: " + uso
-      if (cost && costEl) costEl.textContent = "Costo: " + cost
-    } catch (e) { /* ignore */ }
-  }
-
-  // ------------------------------------------------------------------
   // Arranque
   // ------------------------------------------------------------------
   let attempts = 0
   function run() {
     enhance()
     addControlPanel()
-    addUsageHud()
-    scanUsageHud()
     if (attempts < 14) {
       attempts++
       ocLog("run: attempt " + attempts, "debug")
@@ -473,7 +412,6 @@
   try {
     const mo = new MutationObserver(function () {
       enhance()
-      scanUsageHud()
     })
     mo.observe(document.body, { childList: true, subtree: true, characterData: true })
   } catch (e) { /* ignore */ }
