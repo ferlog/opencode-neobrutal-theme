@@ -135,34 +135,40 @@
         btn.style.boxShadow = "0 0 0 2px rgba(255,255,255,0.12)"
         btn.style.gap = "6px"
       }
-      // "Menú de OpenCode" e "Inicio" → botones del menú superior más anchos (ajustan el texto)
+      // "Menú de OpenCode" e "Inicio" → dos botones oscuros de colores distintos
       if (aria && /menú de opencode/i.test(aria)) {
         btn.style.width = "auto"
-        btn.style.minWidth = "170px"
+        btn.style.minWidth = "160px"
         btn.style.height = "34px"
         btn.style.marginLeft = "10px"
-        btn.style.padding = "0 14px"
-        btn.style.border = "1px solid rgba(255,255,255,0.22)"
+        btn.style.padding = "0 16px"
+        btn.style.background = "#1a237e"
+        btn.style.color = "#fff"
+        btn.style.border = "2px solid #0d1b4a"
         btn.style.borderRadius = "8px"
         btn.style.justifyContent = "center"
         btn.style.gap = "8px"
         btn.style.whiteSpace = "nowrap"
         btn.style.overflow = "visible"
         btn.style.flexShrink = "0"
+        btn.style.boxShadow = "0 0 0 2px rgba(255,255,255,0.12)"
       }
       if (aria && /^inicio$/i.test(aria)) {
         btn.style.width = "auto"
-        btn.style.minWidth = "90px"
+        btn.style.minWidth = "120px"
         btn.style.height = "34px"
         btn.style.marginLeft = "6px"
-        btn.style.padding = "0 14px"
-        btn.style.border = "1px solid rgba(255,255,255,0.22)"
+        btn.style.padding = "0 16px"
+        btn.style.background = "#004d40"
+        btn.style.color = "#fff"
+        btn.style.border = "2px solid #00251a"
         btn.style.borderRadius = "8px"
         btn.style.justifyContent = "center"
         btn.style.gap = "6px"
         btn.style.whiteSpace = "nowrap"
         btn.style.overflow = "visible"
         btn.style.flexShrink = "0"
+        btn.style.boxShadow = "0 0 0 2px rgba(255,255,255,0.12)"
       }
       // Deduplicar etiquetas (ej. "Detener Detener"): si el botón ya tiene
       // el texto nativo, quitar nuestro span y no volver a etiquetarlo.
