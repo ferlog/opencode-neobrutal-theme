@@ -50,6 +50,12 @@
     btn.style.display = "inline-flex"
     btn.style.alignItems = "center"
     btn.style.justifyContent = "center"
+    // Adaptar el ancho al contenido para que el texto no desborde ni se superponga
+    btn.style.width = "auto"
+    btn.style.minWidth = "0"
+    btn.style.maxWidth = "220px"
+    btn.style.boxSizing = "border-box"
+    btn.style.flex = "none"
   }
 
   function isSend(btn) {
