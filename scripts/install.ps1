@@ -204,6 +204,11 @@ if ($mainContent -match [regex]::Escape($oldGetReturn)) {
   $mainContent = $mainContent -replace [regex]::Escape($oldGetReturn), $newGetReturn
   Write-Host "oc-config-get: retorno actualizado (sonidos/leer)" -ForegroundColor Cyan
 }
+
+# Rutas portables: apuntar los scripts de iavirtualuser a la carpeta del repo
+# (el proyecto incluye iavirtualuser/ dentro del propio repo).
+$iaRepo = (Resolve-Path (Join-Path $PSScriptRoot "..\iavirtualuser")).Path.Replace("\", "\\")
+$mainContent = $mainContent -replace 'C:\\\\proyectos2026\\\\proyectos\\\\iavirtualuser', $iaRepo
 Set-Content $mainJs $mainContent -NoNewline
 
 # Parchear el preload: exponer window.api.verPantalla

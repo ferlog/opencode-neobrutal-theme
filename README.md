@@ -9,9 +9,11 @@ Personalización visual y de configuración para **OpenCode** (app de escritorio
 | Carpeta/Archivo | Qué es |
 |----------------|--------|
 | `theme/custom-theme.css` | Hoja de estilos que sobrescribe las variables `--v2-*` de OpenCode e inyecta el estilo NeoBrutal (neumorfismo en botones/tarjetas + brutalismo en el botón principal). Colores de los botones Enviar (verde) y Detener (rojo). |
-| `theme/custom-renderer.js` | Script que añade texto a los botones de icono (Enviar/Detener), evita contenido oculto/recortado y añade el botón **"Ver pantalla"** (OCR vía `iavirtualuser`). |
+| `theme/custom-renderer.js` | Script que añade texto a los botones de icono (Enviar/Detener), evita contenido oculto/recortado y añade el **panel de control `🤖 iavirtualuser`** con toggles (👁 ojos OCR, 🖐 manos, 🔊 sonidos, 🗣 leer respuesta), botón **📷 Ver pantalla** y botón **🔊 Probar lectura**. |
+| `theme/custom-theme.css` | Hoja de estilos NeoBrutal. |
 | `agents/*.md` | 5 agentes personalizados: **review** (revisor), **planner** (planificador), **explorer** (explorador), **docs** (escritor de docs), **security** (auditor de seguridad). |
-| `scripts/install.ps1` | Script que extrae `app.asar`, inyecta CSS/JS, parchea `main/index.js` y `preload/index.js` (handler IPC `oc-ver-pantalla` + `window.api.verPantalla`) y re-empaqueta la app. |
+| `scripts/install.ps1` | Script que extrae `app.asar`, inyecta CSS/JS, parchea `main/index.js` y `preload/index.js` (handlers IPC: `oc-ver-pantalla`, `oc-dump`, `oc-config-get`, `oc-config-set`, `oc-log`, `oc-tts` + métodos `window.api.*`) y re-empaqueta la app. Guarda versiones con fecha/hora y permite deshacer. |
+| `iavirtualuser/` | Copia portable de los scripts de visión/voz que usa la app: `ver_pantalla.py` (OCR + detección de secciones/cuadros), `leer_texto.py` (TTS nativo de Windows) y el módulo `ojos/`. |
 | `opencode.jsonc` | Config base con permisos seguros (edición permitida, bash con confirmación). |
 
 ## Requisitos
@@ -35,10 +37,41 @@ El UI de la app de escritorio es Electron: el CSS vive dentro de `app.asar`. El 
 
 ## Botón "Ver pantalla" (OCR)
 
-El botón **👁 Ver pantalla** aparece junto al chat (abajo a la derecha). Al pulsarlo, el proceso principal de la app ejecuta `python ver_pantalla.py` del proyecto [`iavirtualuser`](../proyectos/iavirtualuser/ver_pantalla.py), que captura la pantalla y la reconoce con el OCR nativo de Windows, y coloca el texto visible en el cuadro de entrada del chat para que el asistente pueda "ver" la pantalla sin imágenes.
+El botón **👁 Ver pantalla** aparece en el panel `🤖 iavirtualuser` (abajo a la izquierda). Al pulsarlo, el proceso principal de la app ejecuta `python ver_pantalla.py`, que captura la pantalla y la reconoce con el OCR nativo de Windows, y coloca el texto visible en el cuadro de entrada del chat para que el asistente pueda "ver" la pantalla sin imágenes.
 
-- Requiere tener instalado el proyecto `C:\proyectos2026\proyectos\iavirtualuser` y sus dependencias (`pip install -r requirements.txt`).
-- Implementado con un handler IPC (`oc-ver-pantalla`) en `out/main/index.js` y `window.api.verPantalla` en `out/preload/index.js`, ambos inyectados por `install.ps1`.
+El script `ver_pantalla.py` incluye opciones avanzadas:
+
+```powershell
+python ver_pantalla.py                          # texto visible
+python ver_pantalla.py --detalle                # texto con coordenadas x/y
+python ver_pantalla.py --region X Y W H         # solo una región
+python ver_pantalla.py --ventana "OpenCode"     # solo una ventana (por título)
+python ver_pantalla.py --secciones              # agrupa el texto en cuadros/diálogos
+```
+
+- Dependencias: `pip install -r requirements.txt` (mss, winsdk, Pillow, opencv-python, numpy).
+- Implementado con el handler IPC (`oc-ver-pantalla`) en `out/main/index.js` y `window.api.verPantalla` en `out/preload/index.js`, ambos inyectados por `install.ps1`.
+
+## Lectura en voz alta (TTS)
+
+El panel tiene el toggle **🗣 Leer respuesta** (lee en voz alta cuando termina una respuesta del asistente) y el botón **🔊 Probar lectura** (lee una frase de prueba al instante). Usa `leer_texto.py`, un TTS **nativo de Windows** (winsdk + winsound) que funciona de forma fiable en Electron, a diferencia de `window.speechSynthesis`.
+
+Implementado con el handler IPC (`oc-tts`) y `window.api.speak`.
+
+## Versiones y deshacer
+
+Cada instalación de `install.ps1`:
+
+- Guarda una **copia versionada** `app.asar.YYYYMMDD-HHMMSS` en `%TEMP%\opencode-neobrutal-work\versiones\` (además de una copia del theme aplicado).
+- Registra la instalación en `historial.txt`.
+- Mantiene `app.asar.last-good` con la última versión buena.
+
+Para deshacer:
+
+```powershell
+.\install.ps1 -Restore   # vuelve al app.asar original
+# o restaura manualmente una copia de %TEMP%\opencode-neobrutal-work\versiones\
+```
 
 ## Instalación de agentes
 

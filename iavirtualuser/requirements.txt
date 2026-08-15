@@ -1,0 +1,8 @@
+# iavirtualuser — dependencias
+# Módulos "ojos": captura, OCR y visión
+mss>=10.0.0
+Pillow>=10.0.0
+opencv-python>=4.9.0
+numpy>=1.24.0
+# OCR nativo de Windows (Windows.Media.Ocr)
+winsdk>=1.0.0b10
