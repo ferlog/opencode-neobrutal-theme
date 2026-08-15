@@ -135,6 +135,27 @@
         btn.style.boxShadow = "0 0 0 2px rgba(255,255,255,0.12)"
         btn.style.gap = "6px"
       }
+      // "Menú de OpenCode" e "Inicio" → botones del menú superior más anchos (ajustan el texto)
+      if (aria && /menú de opencode/i.test(aria)) {
+        btn.style.width = "auto"
+        btn.style.minWidth = "170px"
+        btn.style.height = "34px"
+        btn.style.padding = "0 14px"
+        btn.style.border = "1px solid rgba(255,255,255,0.22)"
+        btn.style.borderRadius = "8px"
+        btn.style.justifyContent = "flex-start"
+        btn.style.gap = "8px"
+      }
+      if (aria && /^inicio$/i.test(aria)) {
+        btn.style.width = "auto"
+        btn.style.minWidth = "90px"
+        btn.style.height = "34px"
+        btn.style.padding = "0 14px"
+        btn.style.border = "1px solid rgba(255,255,255,0.22)"
+        btn.style.borderRadius = "8px"
+        btn.style.justifyContent = "center"
+        btn.style.gap = "6px"
+      }
       // Deduplicar etiquetas (ej. "Detener Detener"): si el botón ya tiene
       // el texto nativo, quitar nuestro span y no volver a etiquetarlo.
       const low2 = (btn.textContent || "").toLowerCase()
