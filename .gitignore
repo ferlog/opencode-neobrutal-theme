@@ -1,0 +1,11 @@
+# Node
+node_modules/
+npm-debug.log*
+
+# Copias de seguridad / trabajo
+*.backup
+app.asar
+
+# Sistema
+Thumbs.db
+.DS_Store

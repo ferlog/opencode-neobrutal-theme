@@ -1,0 +1,19 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "shell": "powershell",
+  "theme": "opencode",
+  "permission": {
+    "bash": {
+      "*": "ask",
+      "git status *": "allow",
+      "git diff *": "allow",
+      "git log *": "allow",
+      "Get-ChildItem *": "allow",
+      "ls *": "allow",
+      "pwd": "allow",
+      "Get-Location": "allow"
+    },
+    "webfetch": "ask",
+    "websearch": "ask"
+  }
+}
